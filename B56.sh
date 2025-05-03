@@ -3,21 +3,25 @@ script_version="2.1.0"
 script_author="iPmart Network | Ali Hassanzadeh"
 script_date="2025-05-03"
 
+
 colorize() {
     local color="$1"
     local text="$2"
     local style="$3"
 
     case "$color" in
-        purple) code="\e[35m" ;;
-        indigo) code="\e[94m" ;;
-        yellow) code="\e[93m" ;;
-        reset)  code="\e[0m"  ;;
+        purple) code="\e[38;5;135m" ;;   # Purple
+        indigo) code="\e[38;5;44m"  ;;   # Turquoise
+        yellow) code="\e[38;5;226m" ;;   # Yellow
+        reset)  code="\e[0m" ;;
         *) code="\e[0m" ;;
     esac
 
     [[ "$style" == "bold" ]] && code="\e[1m$code"
     echo -e "${code}${text}\e[0m"
+}
+
+${text}\e[0m"
 }
 
 if [[ "$1" == "--version" ]]; then
@@ -1211,9 +1215,9 @@ main_menu() {
         show_header
         echo -e "${INDIGO}"
         echo "╔═══════════════════════════════════╗"
-        echo "║        Backhaul Main Menu         ║"
+        echo "║        Backhaul Main Menu        ║"
         echo "╠══════════════════════════════════╣"
-        echo -e "║ 1) ⚙️  Core Manager              ║"
+        echo -e "║ 1) ⚙️  Core Manager               ║"
         echo -e "║ 2) 🛠  Configure Tunnel           ║"
         echo -e "║ 3) 🔧 Tunnel Manager             ║"
         echo -e "║ 4) 🚀 Optimize System            ║"
@@ -1245,7 +1249,7 @@ core_manager() {
     while true; do
         show_header
         colorize indigo "╔═════════════════════╗"
-        colorize indigo "║   ⚙️ Core Manager   ║"
+        colorize indigo "║   ⚙️  Core Manager    ║"
         colorize indigo "╚═════════════════════╝"
         echo -e "${YELLOW}1) Install Backhaul Core"
         echo "2) Update Backhaul Core"
