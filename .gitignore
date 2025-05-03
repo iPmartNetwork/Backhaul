@@ -1,0 +1,8 @@
+
+# Ignore logs and systemd temp files
+*.log
+*.service
+__pycache__/
+*.pyc
+*.swp
+.DS_Store
