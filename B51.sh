@@ -13,14 +13,16 @@ colorize() {
     local style="$3"
 
     case "$color" in
-        purple) code="\033[38;5;135m" ;;   # Purple
-        indigo) code="\033[38;5;44m"  ;;   # Turquoise
-        yellow) code="\033[38;5;226m" ;;   # Yellow
-        reset)  code="\033[0m" ;;
-        *) code="\033[0m" ;;
+        purple) code="[38;5;135m" ;;   # Purple
+        indigo) code="[38;5;44m"  ;;   # Turquoise
+        yellow) code="[38;5;226m" ;;   # Yellow
+        reset)  code="[0m" ;;
+        *) code="[0m" ;;
     esac
 
-    [[ "$style" == "bold" ]] && code="\033[1m${code}"
+    [[ "$style" == "bold" ]] && code="[1m${code}"
+    echo -e "${code}${text}[0m"
+}"
     echo -e "${code}${text}\033[0m"
 }
 
