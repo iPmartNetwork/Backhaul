@@ -1214,23 +1214,25 @@ core_manager() {
 }
 
 install_backhaul_core() {
-    mkdir -p "$config_dir"
-    arch=$(uname -m)
-    case "$arch" in
-        x86_64) arch="amd64" ;;
-        aarch64) arch="arm64" ;;
-        *) colorize purple "Unsupported architecture: $arch"; return 1 ;;
-    esac
-
-    url="https://github.com/Musixal/Backhaul/releases/latest/download/backhaul-$arch"
-    colorize indigo "Downloading Backhaul Core from $url"
-    curl -Lo "$config_dir/backhaul" "$url" && chmod +x "$config_dir/backhaul"
-
-    if [[ -f "$config_dir/backhaul" ]]; then
-        colorize indigo "Backhaul Core installed successfully."
+    echo "[+] Installing Backhaul Core..."
+    mkdir -p /etc/backhaul
+    ARCH=$(uname -m)
+    if [[ "$ARCH" == "x86_64" ]]; then
+        URL="https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_amd64.tar.gz"
+    elif [[ "$ARCH" == "aarch64" ]]; then
+        URL="https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_arm64.tar.gz"
     else
-        colorize purple "Failed to install Backhaul Core."
+        echo "Unsupported architecture: $ARCH"
+        return 1
     fi
+
+    TMP_DIR=$(mktemp -d)
+    curl -fsSL "$URL" -o "$TMP_DIR/backhaul.tar.gz"
+    tar -xzf "$TMP_DIR/backhaul.tar.gz" -C "$TMP_DIR"
+    mv "$TMP_DIR/backhaul" /etc/backhaul/backhaul-core
+    chmod +x /etc/backhaul/backhaul-core
+    rm -rf "$TMP_DIR"
+    echo "[✓] Backhaul Core installed at /etc/backhaul/backhaul-core"
 }
 
 update_backhaul_core() {
@@ -1523,9 +1525,23 @@ update_script() {
 install_backhaul_core() {
     echo "[+] Installing Backhaul Core..."
     mkdir -p /etc/backhaul
-    curl -fsSL -o /etc/backhaul/backhaul-core https://raw.githubusercontent.com/iPmartNetwork/إ/main/backhaul-core
+    ARCH=$(uname -m)
+    if [[ "$ARCH" == "x86_64" ]]; then
+        URL="https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_amd64.tar.gz"
+    elif [[ "$ARCH" == "aarch64" ]]; then
+        URL="https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_arm64.tar.gz"
+    else
+        echo "Unsupported architecture: $ARCH"
+        return 1
+    fi
+
+    TMP_DIR=$(mktemp -d)
+    curl -fsSL "$URL" -o "$TMP_DIR/backhaul.tar.gz"
+    tar -xzf "$TMP_DIR/backhaul.tar.gz" -C "$TMP_DIR"
+    mv "$TMP_DIR/backhaul" /etc/backhaul/backhaul-core
     chmod +x /etc/backhaul/backhaul-core
-    echo "[✓] Installed at /etc/backhaul/backhaul-core"
+    rm -rf "$TMP_DIR"
+    echo "[✓] Backhaul Core installed at /etc/backhaul/backhaul-core"
 }
 
 update_backhaul_core() {
