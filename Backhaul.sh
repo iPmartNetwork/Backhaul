@@ -1,3 +1,84 @@
+# -----------------------
+# API Token Validation
+# -----------------------
+validate_token() {
+    local input_token="$1"
+    local stored_token_file="/root/.backhaul_api_token"
+    [[ -f "$stored_token_file" ]] || return 1
+    local valid_token
+    valid_token=$(<"$stored_token_file")
+    [[ "$input_token" == "$valid_token" ]]
+}
+
+
+
+generate_default_token() {
+    local stored_token_file="/root/.backhaul_api_token"
+    if [[ ! -f "$stored_token_file" ]]; then
+        tr -dc A-Za-z0-9 </dev/urandom | head -c 32 > "$stored_token_file"
+        chmod 600 "$stored_token_file"
+        echo -e "\n[INFO] API token generated and stored at $stored_token_file"
+    fi
+}
+generate_default_token
+
+
+
+log_detailed() {
+    local action="$1"
+    local detail="$2"
+    local logfile="/var/log/backhaul_detailed.log"
+    local timestamp=$(date +'%Y-%m-%d %H:%M:%S')
+    mkdir -p /var/log
+    echo "[$timestamp] [$action] $detail" >> "$logfile"
+}
+
+
+
+save_last_settings() {
+    jq -n \
+        --arg ip "$SERVER_ADDR" \
+        --arg port "$tunnel_port" \
+        --arg transport "$transport" \
+        --arg token "$token" \
+        '{ip: $ip, port: $port, transport: $transport, token: $token}' > "${HOME}/.backhaul_last_settings.json"
+}
+
+
+
+load_last_settings() {
+    if [[ -f "${HOME}/.backhaul_last_settings.json" ]]; then
+        local last_ip=$(jq -r .ip "${HOME}/.backhaul_last_settings.json")
+        local last_port=$(jq -r .port "${HOME}/.backhaul_last_settings.json")
+        local last_transport=$(jq -r .transport "${HOME}/.backhaul_last_settings.json")
+        local last_token=$(jq -r .token "${HOME}/.backhaul_last_settings.json")
+        echo -e "\nLast settings found:"
+        echo -e "IP: $last_ip, Port: $last_port, Transport: $last_transport, Token: $last_token"
+        read -p "Use these settings as default? (y/n): " choice
+        if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
+            SERVER_ADDR="$last_ip"
+            tunnel_port="$last_port"
+            transport="$last_transport"
+            token="$last_token"
+            return 0
+        fi
+    fi
+}
+
+
+
+check_connection() {
+    local host="$1"
+    local port="$2"
+    timeout 3 bash -c "cat < /dev/null > /dev/tcp/$host/$port" 2>/dev/null
+    if [[ $? -ne 0 ]]; then
+        colorize purple "[WARNING] Cannot connect to $host:$port. The address may be unreachable." bold
+        read -p "Do you want to continue anyway? (y/n): " answer
+        [[ "$answer" =~ ^[Yy]$ ]] || return 1
+    fi
+}
+
+
 log_traffic_event() {
 
 check_ipv6() {
@@ -291,7 +372,29 @@ fi
 # -----------------------
 # --create and --delete Support
 # -----------------------
+
+# -----------------------
+# JSON Output for Tunnel Status
+# -----------------------
+if [[ "$1" == "--json-status" && -n "$2" ]]; then
+    TUN_NAME="$2"
+    CONFIG_FILE="$config_dir/$TUN_NAME.toml"
+    SERVICE="backhaul-$TUN_NAME.service"
+    if [[ ! -f "$CONFIG_FILE" ]]; then
+        echo '{ "error": "Tunnel not found" }'
+        exit 1
+    fi
+    IS_ACTIVE=$(systemctl is-active "$SERVICE" &>/dev/null && echo "active" || echo "inactive")
+    echo "{"
+    echo "  \"tunnel\": \"$TUN_NAME\","
+    echo "  \"status\": \"$IS_ACTIVE\","
+    echo "  \"config_file\": \"$CONFIG_FILE\""
+    echo "}"
+    exit 0
+fi
+
 if [[ "$1" == "--delete" && -n "$2" ]]; then
+    TOKEN="${3:-}"; if ! validate_token "$TOKEN"; then echo '{"error":"Unauthorized"}'; exit 1; fi
     NAME="$2"
     SERVICE="backhaul-$NAME.service"
     CONFIG_FILE="$config_dir/$NAME.toml"
@@ -306,6 +409,8 @@ if [[ "$1" == "--delete" && -n "$2" ]]; then
 fi
 
 if [[ "$1" == "--create" && -n "$2" ]]; then
+    TOKEN=$(jq -r .token /tmp/backhaul_create.json)
+    if ! validate_token "$TOKEN"; then echo '{"error":"Unauthorized"}'; exit 1; fi
     echo "$2" > /tmp/backhaul_create.json
     role=$(jq -r .role /tmp/backhaul_create.json)
     port=$(jq -r .port /tmp/backhaul_create.json)
@@ -941,11 +1046,13 @@ EOF
 
     echo
     log_action "Created IRAN tunnel on port $tunnel_port"
+    log_detailed "CREATE" "IRAN tunnel created on port $tunnel_port with transport $transport"
     colorize indigo "IRAN server configuration completed successfully." bold
 }
 
 # Function for configuring Kharej server
 kharej_server_configuration() {
+    load_last_settings
     clear
     colorize purple "Configuring Kharej server" bold
 
@@ -960,6 +1067,14 @@ kharej_server_configuration() {
 while true; do
         echo -ne "[*] IRAN server IP address [IPv4/IPv6]: "
         read -r SERVER_ADDR
+
+        if [[ "$SERVER_ADDR" =~ : ]]; then
+            if ! check_ipv6 "$SERVER_ADDR"; then
+                colorize purple "Invalid IPv6 address format. Please try again."
+                continue
+            fi
+        fi
+
         if [[ -n "$SERVER_ADDR" ]]; then
             break
         else
@@ -1282,10 +1397,12 @@ while true; do
 	fi
 
     # Generate client configuration file
+    save_last_settings
     backup_config_file "${config_dir}/kharej${tunnel_port}.toml"
     cat << EOF > "${config_dir}/kharej${tunnel_port}.toml"
 [client]
-remote_addr = "${SERVER_ADDR}:${tunnel_port}"
+check_connection "$SERVER_ADDR" "$tunnel_port"
+    remote_addr = "${SERVER_ADDR}:${tunnel_port}"
 ${edge_ip}
 transport = "${transport}"
 token = "${token}"
@@ -1340,6 +1457,7 @@ EOF
 
     echo
     log_action "Created KHAREJ tunnel on port $tunnel_port"
+    log_detailed "CREATE" "KHAREJ tunnel created to $SERVER_ADDR:$tunnel_port with transport $transport"
     colorize indigo "Kharej server configuration completed successfully." bold
 }
 
@@ -1402,11 +1520,13 @@ check_tunnel_status() {
             config_port="${config_name#iran}"
 
 			# Check if the Backhaul-client-kharej service is active
-			if systemctl is-active --quiet "$service_name"; then
-				colorize indigo "Iran service with tunnel port $config_port is running"
-			else
-				colorize purple "Iran service with tunnel port $config_port is not running"
-			fi
+			
+if systemctl is-active --quiet "$service_name"; then
+    colorize indigo "✅ $config_name service with tunnel port $config_port is running"
+else
+    colorize purple "❌ $config_name service with tunnel port $config_port is NOT running"
+fi
+
    		fi
     done
 
@@ -1419,11 +1539,13 @@ check_tunnel_status() {
             config_port="${config_name#kharej}"
 
 			# Check if the Backhaul-client-kharej service is active
-			if systemctl is-active --quiet "$service_name"; then
-				colorize indigo "Kharej service with tunnel port $config_port is running"
-			else
-				colorize purple "Kharej service with tunnel port $config_port is not running"
-			fi
+			
+if systemctl is-active --quiet "$service_name"; then
+    colorize indigo "✅ $config_name service with tunnel port $config_port is running"
+else
+    colorize purple "❌ $config_name service with tunnel port $config_port is NOT running"
+fi
+
    		fi
     done
 
@@ -1560,6 +1682,7 @@ destroy_tunnel(){
     fi
 
     log_action "Tunnel $config_name destroyed"
+    log_detailed "DESTROY" "Tunnel $config_name removed and service $service_name disabled"
     colorize indigo "Tunnel destroyed successfully!" bold
     echo
     press_key
@@ -1891,3 +2014,5 @@ SCRIPT_VERSION="v2.1.0"
 
 # ---- Embedded Web Panel Uninstaller ----
 while true; do
+fi
+fi
