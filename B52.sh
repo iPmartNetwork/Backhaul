@@ -23,6 +23,8 @@ colorize() {
     [[ "$style" == "bold" ]] && code="[1m${code}"
     echo -e "${code}${text}[0m"
 }"
+    echo -e "${code}${text}[0m"
+}"
     echo -e "${code}${text}\033[0m"
 }
 
