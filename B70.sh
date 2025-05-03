@@ -451,7 +451,7 @@ while true; do
 
     # Generate configuration
     backup_config_file "${config_dir}/iran${tunnel_port}.toml"
-    cat << EOF > "${config_dir}/iran${tunnel_port}.toml"
+    cat <<EOF > "${config_dir}/iran${tunnel_port}.toml"
 [server]
 bind_addr = ":${tunnel_port}"
 transport = "${transport}"
@@ -519,7 +519,7 @@ EOF
     echo
 
     # Create the systemd service
-    cat << EOF > "${service_dir}/backhaul-iran${tunnel_port}.service"
+    cat <<EOF > "${service_dir}/backhaul-iran${tunnel_port}.service"
 [Unit]
 Description=Backhaul Iran Port $tunnel_port (Iran)
 After=network.target
@@ -575,7 +575,7 @@ EOF
     echo
 
     # Create the systemd service unit file
-    cat << EOF > "${service_dir}/backhaul-kharej${tunnel_port}.service"
+    cat <<EOF > "${service_dir}/backhaul-kharej${tunnel_port}.service"
 [Unit]
 Description=Backhaul Kharej Port $tunnel_port
 After=network.target
