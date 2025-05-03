@@ -1,23 +1,3 @@
-
-colorize() {
-    local color="$1"
-    local text="$2"
-    local style="${3:-normal}"
-
-    case $color in
-        indigo) code='\033[1;35m' ;;
-        purple) code='\033[1;95m' ;;
-        *) code='\033[0m' ;;
-    esac
-
-    case $style in
-        bold) style_code='\033[1m' ;;
-        *) style_code='\033[0m' ;;
-    esac
-
-    echo -e "${style_code}${code}${text}\033[0m"
-}
-
 # -----------------------
 # API Token Validation
 # -----------------------
@@ -99,20 +79,7 @@ check_connection() {
 }
 
 
-
 log_traffic_event() {
-    local event_type="$1"
-    local name="$2"
-    local file="/var/log/backhaul_traffic.json"
-    local timestamp=$(date +'%Y-%m-%dT%H:%M:%S')
-
-    mkdir -p /var/log
-    if [ ! -f "$file" ]; then echo "[]" > "$file"; fi
-
-    tmp=$(mktemp)
-    jq ". += [{time: \"$timestamp\", event: \"$event_type\", tunnel: \"$name\"}]" "$file" > "$tmp" && mv "$tmp" "$file"
-}
-
 
 check_ipv6() {
     local ip=$1
@@ -172,7 +139,13 @@ PURPLE='\033[1;95m'
 NC='\033[0m' # No Color
 
 # Redesigned colorize function for consistent theme
-";;
+colorize() {
+    local color="$1"
+    local text="$2"
+    local style="$3"
+
+    case $color in
+        indigo) code="${BLUE}";;
         indigo) code="${INDIGO}";;
         indigo) code="${INDIGO}";;
         purple) code="${PURPLE}";;
@@ -204,7 +177,10 @@ press_key(){
 }
 
 # Define a function to colorize text
-"
+colorize() {
+    local color="$1"
+    local text="$2"
+    local style="${3:-normal}"
 
     # Define ANSI color codes
     local black="\033[30m"
@@ -375,7 +351,7 @@ if [[ "$1" == "--json" ]]; then
                 inactive: 0
             }' \
             | jq --arg dir "$config_dir" '(
-                reduce (inputs; .) as $null (.;
+                purpleuce (inputs; .) as $null (.;
                     (["iran", "kharej"] | .[]) as $type |
                     (.[$type] |= (
                         [inputs | split("\n")[] | select(length > 0) |
@@ -1899,39 +1875,6 @@ INDIGO='[1;35m'
 NC='[0m' # No Color
 
 # Function to display menu
-display_menu() {
-    clear
-    display_logo
-    display_server_info
-
-    # Count tunnels
-    local active=0 inactive=0
-    for config in "$config_dir"/*.toml; do
-        [[ -f "$config" ]] || continue
-        name=$(basename "${config%.toml}")
-        service="backhaul-${name}.service"
-        if systemctl is-active --quiet "$service"; then
-            ((active++))
-        else
-            ((inactive++))
-        fi
-    done
-    echo -e "${INDIGO}Tunnels: 🟢 $active active | 🔴 $inactive inactive${NC}\n"
-
-
-    echo
-    colorize indigo " 1. Configure a new tunnel [IPv4/IPv6]" bold
-    colorize purple " 2. Tunnel management menu" bold
-    colorize indigo " 3. Check tunnels status" bold
-    colorize purple " 4. Update & Install Backhaul Core" bold
-    colorize indigo " 5. Update & install script" bold
-    colorize purple " 6. Remove Backhaul Core" bold
-    colorize indigo " 7. web panel manager" bold
-    colorize purple " 8. Reduce Ping & Jitter" bold
-    colorize indigo " 0. Exit" bold
-    echo
-    echo "-------------------------------"
-}
 
 # Function to read user input
 
@@ -1982,21 +1925,6 @@ web_panel_manager() {
 }
 
 
-read_option() {
-    read -p "Enter your choice [0-9]: " choice
-    case $choice in
-        1) configure_tunnel ;;
-	7) web_panel_manager ;;
-        8) reduce_ping_jitter ;;
-        2) tunnel_management ;;
-        3) check_tunnel_status ;;
-        4) download_and_extract_backhaul "menu";;
-        5) update_script ;;
-        6) remove_core ;;
-        0) exit 0 ;;
-        *) echo -e "${PURPLE} Invalid option!${NC}" && sleep 1 ;;
-    esac
-}
 
 reduce_ping_jitter() {
     clear
@@ -2036,7 +1964,10 @@ done
 SCRIPT_VERSION="v2.1.0"
 
 
-
+# ---- Embedded Web Panel Uninstaller ----
+while true; do
+fi
+fi
 
 
 #!/bin/bash
@@ -2276,4 +2207,62 @@ download_backhaul
 
 while true; do
     main_menu
+done
+
+# حذف شده: گزینه‌های 6، 7، و 8 از منو و کدهای مربوطه
+
+# تابع نمایش منو بدون گزینه‌های 6، 7، و 8
+display_menu() {
+    clear
+    display_logo
+    display_server_info
+
+    local active=0 inactive=0
+    for config in "$config_dir"/*.toml; do
+        [[ -f "$config" ]] || continue
+        name=$(basename "${config%.toml}")
+        service="backhaul-${name}.service"
+        if systemctl is-active --quiet "$service"; then
+            ((active++))
+        else
+            ((inactive++))
+        fi
+    done
+    echo -e "${INDIGO}Tunnels: 🟢 $active active | 🔴 $inactive inactive${NC}\n"
+
+    echo
+    colorize indigo " 1. Configure a new tunnel [IPv4/IPv6]" bold
+    colorize purple " 2. Tunnel management menu" bold
+    colorize indigo " 3. Check tunnels status" bold
+    colorize purple " 4. Update & Install Backhaul Core" bold
+    colorize indigo " 5. Update & install script" bold
+    colorize purple " 0. Exit" bold
+    echo
+    echo "-------------------------------"
+}
+
+# تابع خواندن ورودی کاربر، بدون گزینه‌های 6 تا 8
+read_option() {
+    read -p "Enter your choice [0-5]: " choice
+    case $choice in
+        1) configure_tunnel ;;
+        2) tunnel_management ;;
+        3) check_tunnel_status ;;
+        4) download_and_extract_backhaul "menu" ;;
+        5) update_script ;;
+        0) exit 0 ;;
+        *) echo -e "${PURPLE} Invalid option!${NC}" && sleep 1 ;;
+    esac
+}
+
+# حذف کامل توابع غیرضروری:
+# - remove_core()
+# - web_panel_manager()
+# - reduce_ping_jitter()
+# در صورت نیاز، این توابع را از کل اسکریپت اصلی هم حذف کن یا کامنت کن.
+
+# حلقه اصلی همچنان به‌صورت قبل:
+while true; do
+    display_menu
+    read_option
 done
