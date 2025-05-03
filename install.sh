@@ -8,7 +8,7 @@ SERVICE_FILE="/etc/systemd/system/backhaul-api.service"
 echo "[+] Installing Backhaul API..."
 
 # Copy script to /usr/local/bin
-cp ./backhaul_v2.3_api.sh "$SCRIPT_PATH"
+cp ./backhaul_api.sh "$SCRIPT_PATH"
 chmod +x "$SCRIPT_PATH"
 
 # Create systemd service file
