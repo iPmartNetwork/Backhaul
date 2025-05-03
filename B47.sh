@@ -4,6 +4,7 @@ script_author="iPmart Network | Ali Hassanzadeh"
 script_date="2025-05-03"
 
 
+
 colorize() {
     local color="$1"
     local text="$2"
@@ -19,6 +20,9 @@ colorize() {
 
     [[ "$style" == "bold" ]] && code="\e[1m$code"
     echo -e "${code}${text}\e[0m"
+}
+
+${text}\e[0m"
 }
 
 ${text}\e[0m"
