@@ -4,24 +4,35 @@ script_author="iPmart Network | Ali Hassanzadeh"
 script_date="2025-05-03"
 
 
+INDIGO="\033[38;5;44m"
+PURPLE="\033[38;5;135m"
+YELLOW="\033[38;5;226m"
+NC="\033[0m"
+
+
+config_dir="/etc/backhaul"
+service_dir="/etc/systemd/system"
+
+log_action() { echo "[LOG] $1"; }
+log_detailed() { echo "[DETAIL] $1 - $2"; }
+press_key() { read -rp "Press Enter to continue..."; }
+
+
 colorize() {
     local color="$1"
     local text="$2"
     local style="$3"
 
     case "$color" in
-        purple) code="\e[38;5;135m" ;;   # Purple
-        indigo) code="\e[38;5;44m"  ;;   # Turquoise
-        yellow) code="\e[38;5;226m" ;;   # Yellow
-        reset)  code="\e[0m" ;;
+        purple) code="\e[35m" ;;
+        indigo) code="\e[94m" ;;
+        yellow) code="\e[93m" ;;
+        reset)  code="\e[0m"  ;;
         *) code="\e[0m" ;;
     esac
 
     [[ "$style" == "bold" ]] && code="\e[1m$code"
     echo -e "${code}${text}\e[0m"
-}
-
-${text}\e[0m"
 }
 
 if [[ "$1" == "--version" ]]; then
@@ -66,9 +77,7 @@ iran_server_configuration() {
 
 
 
-# ---- Embedded Web Panel Installer ----
 
-# ---- Embedded Web Panel Uninstaller ----
 while true; do
         echo -ne "[*] Tunnel port: "
         read -r tunnel_port
@@ -106,9 +115,7 @@ while true; do
     if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
 
 
-# ---- Embedded Web Panel Installer ----
 
-# ---- Embedded Web Panel Uninstaller ----
 while true; do
             echo -ne "[-] TUN Device Name (default backhaul): "
             read -r tun_name
@@ -132,9 +139,7 @@ while true; do
     if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
 
 
-# ---- Embedded Web Panel Installer ----
 
-# ---- Embedded Web Panel Uninstaller ----
 while true; do
             echo -ne "[-] TUN Subnet (default 10.10.10.0/24): "
             read -r tun_subnet
@@ -167,9 +172,7 @@ while true; do
     if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
 
 
-# ---- Embedded Web Panel Installer ----
 
-# ---- Embedded Web Panel Uninstaller ----
 while true; do
             echo -ne "[-] TUN MTU (default 1500): "
             read -r mtu
@@ -220,9 +223,7 @@ while true; do
     if [[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; then
 
 
-# ---- Embedded Web Panel Installer ----
 
-# ---- Embedded Web Panel Uninstaller ----
 while true; do
             echo -ne "[-] Channel Size (default 2048): "
             read -r channel_size
@@ -274,9 +275,7 @@ while true; do
     if [[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; then
 
 
-# ---- Embedded Web Panel Installer ----
 
-# ---- Embedded Web Panel Uninstaller ----
 while true; do
             echo -ne "[-] Heartbeat (in seconds, default 40): "
             read -r heartbeat
@@ -306,9 +305,7 @@ while true; do
     if [[ "$transport" =~ ^(tcpmux|wsmux)$ ]]; then
 
 
-# ---- Embedded Web Panel Installer ----
 
-# ---- Embedded Web Panel Uninstaller ----
 while true; do
             echo
             echo -ne "[-] Mux concurrency (default 8): "
@@ -334,9 +331,7 @@ while true; do
     if [[ "$transport" =~ ^(tcpmux|wsmux|utcpmux|uwsmux)$ ]]; then
 
 
-# ---- Embedded Web Panel Installer ----
 
-# ---- Embedded Web Panel Uninstaller ----
 while true; do
             echo
             echo -ne "[-] Mux Version (1 or 2) (default 2): "
@@ -384,9 +379,7 @@ while true; do
 	local web_port=""
 
 
-# ---- Embedded Web Panel Installer ----
 
-# ---- Embedded Web Panel Uninstaller ----
 while true; do
 	    echo -ne "[-] Enter Web Port (default 0 to disable): "
 	    read -r web_port
@@ -566,9 +559,7 @@ kharej_server_configuration() {
     # Prompt for IRAN server IP address
 
 
-# ---- Embedded Web Panel Installer ----
 
-# ---- Embedded Web Panel Uninstaller ----
 while true; do
         echo -ne "[*] IRAN server IP address [IPv4/IPv6]: "
         read -r SERVER_ADDR
@@ -593,9 +584,7 @@ while true; do
     # Read the tunnel port
 
 
-# ---- Embedded Web Panel Installer ----
 
-# ---- Embedded Web Panel Uninstaller ----
 while true; do
         echo -ne "[*] Tunnel port: "
         read -r tunnel_port
@@ -628,9 +617,7 @@ while true; do
         echo
 
 
-# ---- Embedded Web Panel Installer ----
 
-# ---- Embedded Web Panel Uninstaller ----
 while true; do
             echo -ne "[-] TUN Device Name (default backhaul): "
             read -r tun_name
@@ -654,9 +641,7 @@ while true; do
     if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
 
 
-# ---- Embedded Web Panel Installer ----
 
-# ---- Embedded Web Panel Uninstaller ----
 while true; do
             echo -ne "[-] TUN Subnet (default 10.10.10.0/24): "
             read -r tun_subnet
@@ -689,9 +674,7 @@ while true; do
     if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
 
 
-# ---- Embedded Web Panel Installer ----
 
-# ---- Embedded Web Panel Uninstaller ----
 while true; do
             echo -ne "[-] TUN MTU (default 1500): "
             read -r mtu
@@ -716,9 +699,7 @@ while true; do
     if [[ "$transport" =~ ^(ws|wsmux|uwsmux)$ ]]; then
 
 
-# ---- Embedded Web Panel Installer ----
 
-# ---- Embedded Web Panel Uninstaller ----
 while true; do
             echo
             echo -ne "[-] Edge IP/Domain (optional)(press enter to disable): "
@@ -776,9 +757,7 @@ while true; do
     	echo
 
 
-# ---- Embedded Web Panel Installer ----
 
-# ---- Embedded Web Panel Uninstaller ----
 while true; do
             echo -ne "[-] Connection Pool (default 8): "
             read -r pool
@@ -801,9 +780,7 @@ while true; do
     if [[ "$transport" =~ ^(tcpmux|wsmux|utcpmux|uwsmux)$ ]]; then
 
 
-# ---- Embedded Web Panel Installer ----
 
-# ---- Embedded Web Panel Uninstaller ----
 while true; do
             echo
             echo -ne "[-] Mux Version (1 or 2) (default 2): "
@@ -850,9 +827,7 @@ while true; do
 	local web_port=""
 
 
-# ---- Embedded Web Panel Installer ----
 
-# ---- Embedded Web Panel Uninstaller ----
 while true; do
 	    echo -ne "[-] Enter Web Port (default 0 to disable): "
 	    read -r web_port
@@ -1197,7 +1172,7 @@ edit_tunnel() {
 
 show_header() {
     clear
-    echo -e "${INDIGO}"
+    
     echo "╔══════════════════════════════════════════════════╗"
     echo "║            🚀 Backhaul Tunnel Manager           ║"
     echo "╠══════════════════════════════════════════════════╣"
@@ -1207,13 +1182,13 @@ show_header() {
     echo "╚══════════════════════════════════════════════════╝"
     echo -e "📂 Script Path: $(realpath "$0")"
     echo -e "🕒 Executed at: $(date '+%Y-%m-%d %H:%M:%S')"
-    echo -e "${NC}"
+    
 }
 
 main_menu() {
     while true; do
         show_header
-        echo -e "${INDIGO}"
+        
         echo "╔═══════════════════════════════════╗"
         echo "║        Backhaul Main Menu        ║"
         echo "╠══════════════════════════════════╣"
@@ -1225,7 +1200,7 @@ main_menu() {
         echo -e "║ 6) ♻️ Update Script              ║"
         echo -e "║ 0) ❌ Exit                       ║"
         echo "╚══════════════════════════════════╝"
-        echo -e "${NC}"
+        
         echo
         read -rp "Please enter your choice: " choice
 
@@ -1258,10 +1233,8 @@ core_manager() {
         echo
         read -rp "Enter your choice (or M to return to Main Menu): " core_choice
 
-        read -r core_choice
-        [[ "$core_choice" =~ ^[Mm]$ ]] && return
-        read -r core_choice
-        [[ "$core_choice" =~ ^[Mm]$ ]] && return
+         && return
+         && return
         case "$core_choice" in
             1) install_backhaul_core ;;
             2) update_backhaul_core ;;
@@ -1406,10 +1379,8 @@ web_panel_manager() {
         echo
         read -rp "Enter your choice (or M to return to Main Menu): " panel_choice
 
-        read -r panel_choice
-        [[ "$panel_choice" =~ ^[Mm]$ ]] && return
-        read -r panel_choice
-        [[ "$panel_choice" =~ ^[Mm]$ ]] && return
+         && return
+         && return
         case "$panel_choice" in
             1) install_web_panel ;;
             2) uninstall_web_panel ;;
