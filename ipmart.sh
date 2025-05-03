@@ -1880,9 +1880,7 @@ read_option() {
         4) update_script ;;
         0) exit 0 ;;
         *) echo -e "${RED} Invalid option!${NC}" && sleep 1 ;;
-    esac
 }
-    esac
 }
 
 # Main script
@@ -1909,6 +1907,5 @@ core_manager_menu() {
             3) remove_core ;;
             0) break ;;
             *) echo -e "${RED}Invalid option!${NC}" && sleep 1 ;;
-        esac
     done
 }
