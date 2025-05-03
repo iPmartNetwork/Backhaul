@@ -1853,7 +1853,6 @@ MAGENTA="\e[95m"
 NC='\033[0m' # No Color
 
 # Function to display menu
-# Function to display menu
 display_menu() {
     clear
     display_logo
@@ -1870,7 +1869,6 @@ display_menu() {
 }
 
 # Function to read user input
-# Function to read user input
 read_option() {
     read -p "Enter your choice [0-4]: " choice
     case $choice in
@@ -1880,8 +1878,6 @@ read_option() {
         4) update_script ;;
         0) exit 0 ;;
         *) echo -e "${RED} Invalid option!${NC}" && sleep 1 ;;
-    esac
-}
     esac
 }
 
