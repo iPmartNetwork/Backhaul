@@ -93,7 +93,7 @@ EOF
     if [[ -f "${CONFIG_DIR}/backhaul_premium" ]]; then
         echo -e "Core Version: ${YELLOW}$(${CONFIG_DIR}/backhaul_premium -v)${GREEN}"
     fi
-    echo -e "Telegram Channel: ${YELLOW}@anony_identity${NC}"
+    echo -e "Telegram Channel: ${YELLOW}@iPmart_Network${NC}"
 }
 
 display_server_info() {
