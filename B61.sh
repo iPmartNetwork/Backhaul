@@ -24,14 +24,14 @@ colorize() {
     local style="$3"
 
     case "$color" in
-        purple) code="\e[35m" ;;
-        indigo) code="\e[94m" ;;
-        yellow) code="\e[93m" ;;
-        reset)  code="\e[0m"  ;;
-        *) code="\e[0m" ;;
+        purple) code="\033[35m" ;;
+        indigo) code="\033[94m" ;;
+        yellow) code="\033[93m" ;;
+        reset)  code="\033[0m"  ;;
+        *) code="\033[0m" ;;
     esac
 
-    [[ "$style" == "bold" ]] && code="\e[1m$code"
+    [[ "$style" == "bold" ]] && code="\033[1m$code"
     echo -e "${code}${text}\e[0m"
 }
 
@@ -881,7 +881,6 @@ while true; do
     backup_config_file "${config_dir}/kharej${tunnel_port}.toml"
     cat << EOF > "${config_dir}/kharej${tunnel_port}.toml"
 [client]
-check_connection "$SERVER_ADDR" "$tunnel_port"
     remote_addr = "${SERVER_ADDR}:${tunnel_port}"
 ${edge_ip}
 transport = "${transport}"
@@ -1233,7 +1232,7 @@ core_manager() {
         echo -e "0) Return to Main Menu${NC}"
         echo
         read -rp "Enter your choice (or M to return to Main Menu): " core_choice
-[[ "$core_choice" =~ ^[Mm]$ ]] && returncase "$core_choice" in
+[[ "$core_choice" =~ ^[Mm]$ ]] && return "$core_choice" in
             1) install_backhaul_core ;;
             2) update_backhaul_core ;;
             3) remove_backhaul_core ;;
@@ -1242,7 +1241,7 @@ core_manager() {
         esac
         echo
         read -rp "Press Enter to continue..." pause
-[[ "$pause" =~ ^[Mm]$ ]] && returndone
+[[ "$pause" =~ ^[Mm]$ ]] && return
 }
 
 install_backhaul_core() {
@@ -1376,7 +1375,7 @@ web_panel_manager() {
         echo -e "0) Return to Main Menu${NC}"
         echo
         read -rp "Enter your choice (or M to return to Main Menu): " panel_choice
-[[ "$panel_choice" =~ ^[Mm]$ ]] && returncase "$panel_choice" in
+[[ "$panel_choice" =~ ^[Mm]$ ]] && return "$panel_choice" in
             1) install_web_panel ;;
             2) uninstall_web_panel ;;
             3) check_web_panel ;;
@@ -1385,7 +1384,7 @@ web_panel_manager() {
         esac
         echo
         read -rp "Press Enter to continue..." pause
-[[ "$pause" =~ ^[Mm]$ ]] && returndone
+[[ "$pause" =~ ^[Mm]$ ]] && return
 }
 
 install_web_panel() {
