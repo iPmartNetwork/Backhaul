@@ -1075,8 +1075,7 @@ colorize purple "─────────────── Available Actions
 	read -p "Enter your choice (0 to return): " choice
 
     case $choice in
-        7) web_panel_manager ;;
-        8) reduce_ping_jitter ;;        1) destroy_tunnel "$selected_config" ;;
+                1) destroy_tunnel "$selected_config" ;;
         2) restart_service "$service_name" ;;
         3) view_service_logs "$service_name" ;;
         4) view_service_status "$service_name" ;;
@@ -1257,5 +1256,162 @@ remove_backhaul_core() {
         colorize indigo "Backhaul Core removed."
     else
         colorize purple "Backhaul Core is not installed."
+    fi
+}
+
+
+
+
+optimize_system() {
+    clear
+    colorize indigo "🚀 Optimizing System for Low Latency & High Performance..." bold
+    echo
+
+    # Enable BBR congestion control
+    if grep -q "bbr" /proc/sys/net/ipv4/tcp_congestion_control; then
+        colorize yellow "BBR already enabled."
+    else
+        echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
+        echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
+        sysctl -p >/dev/null 2>&1
+        colorize indigo "BBR enabled via sysctl."
+    fi
+
+    # Optimize sysctl for networking
+    cat <<EOF >> /etc/sysctl.conf
+
+# Backhaul Network Optimization
+net.core.rmem_max=2500000
+net.core.wmem_max=2500000
+net.ipv4.tcp_rmem=4096 87380 2500000
+net.ipv4.tcp_wmem=4096 65536 2500000
+net.ipv4.tcp_window_scaling=1
+net.ipv4.tcp_timestamps=1
+net.ipv4.tcp_sack=1
+net.ipv4.tcp_no_metrics_save=1
+EOF
+
+    sysctl -p >/dev/null 2>&1
+
+    # Set high ulimit for open files
+    ulimit -n 1048576
+    echo -e "* soft nofile 1048576
+* hard nofile 1048576" >> /etc/security/limits.conf
+    echo -e "ulimit -n 1048576" >> ~/.bashrc
+
+    colorize indigo "System optimization applied successfully!" bold
+    echo
+    press_key
+}
+
+
+
+
+update_script() {
+    clear
+    colorize indigo "♻️ Updating Backhaul Script..." bold
+    echo
+
+    local remote_url="https://raw.githubusercontent.com/iPmartNetwork/Backhaul/master/backhaul.sh"
+    local script_path="$(realpath "$0")"
+    local backup_path="${script_path}.bak"
+
+    # Backup current version
+    cp "$script_path" "$backup_path"
+    colorize yellow "Backup created at $backup_path"
+
+    # Try downloading new script
+    if curl -fsSL "$remote_url" -o "$script_path"; then
+        chmod +x "$script_path"
+        colorize indigo "✅ Script updated successfully from:"
+        echo -e "${YELLOW}$remote_url${NC}"
+        echo
+        read -rp "Press Enter to restart the script..." enter
+        exec "$script_path"
+    else
+        colorize purple "❌ Failed to update script. Reverting to previous version..."
+        mv "$backup_path" "$script_path"
+        chmod +x "$script_path"
+    fi
+    echo
+    press_key
+}
+
+
+
+
+web_panel_manager() {
+    while true; do
+        clear
+        colorize indigo "🌐 Web Panel Manager" bold
+        echo
+        echo -e "${YELLOW}1) Install Web Panel"
+        echo "2) Uninstall Web Panel"
+        echo "3) Check Panel Status"
+        echo -e "0) Return to Main Menu${NC}"
+        echo
+        read -rp "Enter your choice: " panel_choice
+
+        case "$panel_choice" in
+            1) install_web_panel ;;
+            2) uninstall_web_panel ;;
+            3) check_web_panel ;;
+            0) return ;;
+            *) colorize purple "Invalid choice. Try again." ;;
+        esac
+        echo
+        read -rp "Press Enter to continue..." pause
+    done
+}
+
+install_web_panel() {
+    colorize indigo "Installing Web Panel..." bold
+    apt update -y && apt install -y python3 python3-pip
+    pip3 install flask >/dev/null 2>&1
+
+    mkdir -p /opt/backhaul-panel
+    cat <<EOF > /opt/backhaul-panel/panel.py
+from flask import Flask
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "✅ Backhaul Web Panel is Running!"
+
+app.run(host="0.0.0.0", port=9090)
+EOF
+
+    cat <<EOF > /etc/systemd/system/backhaul-panel.service
+[Unit]
+Description=Backhaul Web Panel
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/backhaul-panel/panel.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    systemctl daemon-reload
+    systemctl enable --now backhaul-panel.service
+
+    colorize indigo "Web Panel installed and started on port 9090." bold
+}
+
+uninstall_web_panel() {
+    systemctl disable --now backhaul-panel.service
+    rm -f /etc/systemd/system/backhaul-panel.service
+    rm -rf /opt/backhaul-panel
+    systemctl daemon-reload
+    colorize purple "Web Panel has been removed." bold
+}
+
+check_web_panel() {
+    if systemctl is-active --quiet backhaul-panel.service; then
+        colorize indigo "✅ Web Panel is running on port 9090"
+    else
+        colorize purple "❌ Web Panel is not running"
     fi
 }
