@@ -133,15 +133,15 @@ download_and_extract_backhaul() {
     # Check architecture
     ARCH=$(uname -m)
     case "$ARCH" in
-        x86_64)
+    x86_64)
             DOWNLOAD_URL="https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul_amd64.tar.gz"
-        arm64|aarch64)
+    arm64|aarch64)
             DOWNLOAD_URL="https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul_arm64.tar.gz"
-        *)
+    *)
             echo -e "${RED}Unsupported architecture: $ARCH.${NC}"
             sleep 1
             exit 1
-    esac
+esac
 
     if [ -z "$DOWNLOAD_URL" ]; then
         echo -e "${RED}Failed to retrieve download URL.${NC}"
@@ -1466,13 +1466,13 @@ GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 
 display_menu() {
-    colorize GREEN " 1 ) Core manager"
-    colorize GREEN " 2) Configure a new tunnel [IPv4/IPv6]" bold
-    colorize GREEN   " 3) Tunnel management menu" bold
-    colorize GREEN  " 4) Check tunnels status" bold
-    colorize GREEN " 5) Web Service"
-    colorize GREEN " 6) Update Script"
-    colorize RED " 0. Exit"
+    colorize cyan " 1 ) Core manager"
+    colorize cyan " 2) Configure a new tunnel [IPv4/IPv6]" bold
+    colorize cyan   " 3) Tunnel management menu" bold
+    colorize cyan  " 4) Check tunnels status" bold
+    colorize cyan " 5) Web Service"
+    colorize cyan " 6) Update Script"
+    colorize YELLOW " 0. Exit"
     echo
     echo "-------------------------------"
 }
