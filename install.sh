@@ -2016,3 +2016,243 @@ SCRIPT_VERSION="v2.1.0"
 while true; do
 fi
 fi
+
+
+#!/bin/bash
+
+### ──────────────── META INFO ────────────────
+SCRIPT_VERSION="v6.0.0"
+CONFIG_DIR="/root/backhaul-core"
+SERVICE_DIR="/etc/systemd/system"
+TOKEN_FILE="/root/.backhaul_api_token"
+LOG_DIR="/var/log"
+LAST_CONF="/root/.last_backhaul.conf"
+API_PORT=8686
+
+### ──────────────── COLORS ────────────────
+RESET='[0m'
+INDIGO='[1;35m'
+PURPLE='[1;95m'
+
+colorize() {
+    local color="$1"; shift
+    local text="$1"; shift
+    local code="${RESET}"
+    [[ "$color" == "purple" ]] && code="${PURPLE}"
+    [[ "$color" == "indigo" ]] && code="${INDIGO}"
+    echo -e "${code}${text}${RESET}"
+}
+
+### ──────────────── DEPENDENCY INSTALLER ────────────────
+install_dependency() {
+    for pkg in curl jq unzip netcat; do
+        command -v $pkg &>/dev/null || {
+            colorize indigo "Installing missing package: $pkg"
+            apt-get update -qq && apt-get install -y $pkg >/dev/null
+        }
+    done
+}
+
+### ──────────────── TOKEN MANAGEMENT ────────────────
+generate_token() {
+    [[ -f "$TOKEN_FILE" ]] || tr -dc A-Za-z0-9 </dev/urandom | head -c 32 > "$TOKEN_FILE"
+    chmod 600 "$TOKEN_FILE"
+}
+
+validate_token() {
+    local input="$1"
+    [[ -f "$TOKEN_FILE" ]] && [[ "$input" == "$(<"$TOKEN_FILE")" ]]
+}
+
+### ──────────────── LOGGING ────────────────
+log_action() {
+    mkdir -p "$LOG_DIR"
+    echo "[$(date +'%F %T')] $1" >> "$LOG_DIR/backhaul.log"
+}
+
+log_event_json() {
+    local event="$1" name="$2"
+    local file="$LOG_DIR/backhaul_events.json"
+    local timestamp=$(date -Iseconds)
+    [[ -f "$file" ]] || echo '[]' > "$file"
+    jq ". += [{time: "$timestamp", event: "$event", tunnel: "$name"}]" "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+}
+
+### ──────────────── DOWNLOAD CORE ────────────────
+download_backhaul() {
+    mkdir -p "$CONFIG_DIR"
+    [[ -f "$CONFIG_DIR/backhaul" ]] && return
+
+    local arch=$(uname -m)
+    local url=""
+    case "$arch" in
+        x86_64) url="https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_amd64.tar.gz" ;;
+        aarch64|arm64) url="https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_arm64.tar.gz" ;;
+        *) colorize purple "Unsupported architecture: $arch"; exit 1 ;;
+    esac
+
+    tmp=$(mktemp -d)
+    curl -sSL "$url" -o "$tmp/core.tar.gz"
+    tar -xf "$tmp/core.tar.gz" -C "$CONFIG_DIR"
+    chmod +x "$CONFIG_DIR/backhaul"
+    rm -rf "$tmp"
+    colorize indigo "Backhaul core installed successfully"
+}
+
+### ──────────────── EMBEDDED WEB API ────────────────
+start_web_api() {
+    mkdir -p /tmp/backhaul_uploads
+    export CONFIG_DIR
+
+    # Serve the HTML web panel
+    while true; do
+        {
+            read request
+            method=$(echo "$request" | cut -d' ' -f1)
+            path=$(echo "$request" | cut -d' ' -f2)
+
+            # Serve the HTML web panel
+            if [[ "$method" == "GET" && "$path" == "/" ]]; then
+                echo -e "HTTP/1.1 200 OK
+Content-Type: text/html
+"
+                cat <<EOF
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backhaul Tunnel Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #2f3542;
+            color: #fff;
+        }
+        .header {
+            background-color: #4caf50;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            color: white;
+            border-bottom: 3px solid #2c3e50;
+        }
+        .menu {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .menu-item {
+            background-color: #3498db;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+        .menu-item:hover {
+            background-color: #2980b9;
+            transform: scale(1.1);
+        }
+        .menu-item:active {
+            transform: scale(0.9);
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #34495e;
+            text-align: center;
+            padding: 10px;
+            color: white;
+        }
+        .content {
+            margin: 20px;
+            text-align: center;
+        }
+        @media screen and (max-width: 768px) {
+            .menu {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        🎛️ Backhaul Tunnel Manager
+    </div>
+    <div class="content">
+        <h2>Welcome to Backhaul Tunnel Manager</h2>
+        <p>Select an option to manage your tunnels:</p>
+    </div>
+    <div class="menu">
+        <a href="#" class="menu-item">🔧 Create Tunnel</a>
+        <a href="#" class="menu-item">❌ Remove Tunnel</a>
+        <a href="#" class="menu-item">📊 List Tunnels</a>
+        <a href="#" class="menu-item">⏯️ Start / Stop Tunnel</a>
+        <a href="#" class="menu-item">🚪 Exit</a>
+    </div>
+    <div class="footer">
+        Backhaul Tunnel Manager - Version 6.0.0
+    </div>
+</body>
+</html>
+EOF
+            # Continue with other API logic if needed
+        } | nc -l -p $API_PORT -q 1
+    done & # Start the web server in the background
+    echo $! > /tmp/backhaul_webapi.pid # Save the web server PID
+}
+
+### ──────────────── MAIN ────────────────
+main_menu() {
+    clear
+    colorize indigo "🎛️ Backhaul Tunnel Manager $SCRIPT_VERSION"
+    echo "────────────────────────────────────────────"
+    echo -e "[[1;95m1[0m] 🔧 Configure a new tunnel [IPv4/IPv6]"
+    echo -e "[[1;95m2[0m] 🚀 Tunnel management menu"
+    echo -e "[[1;95m3[0m] 📊 Check tunnels status"
+    echo -e "[[1;95m4[0m] 🔄 Update & Install Backhaul Core"
+    echo -e "[[1;95m5[0m] 🔄 Update & Install script"
+    echo -e "[[1;95m6[0m] 🗑️ Remove Backhaul Core"
+    echo -e "[[1;95m7[0m] 🚪 Exit"
+    echo "────────────────────────────────────────────"
+    read -p "Select an option: " opt
+    case $opt in
+        1)
+            read -p "→ Tunnel name: " name
+            read -p "→ Port: " port
+            read -p "→ IPv4 or IPv6: " ip_version
+            cat <<EOF > "$CONFIG_DIR/$name.toml"
+name = "$name"
+port = "$port"
+ip_version = "$ip_version"
+EOF
+            colorize indigo "Configured tunnel $name with IP version $ip_version"
+            ;;
+        2)
+            tunnel_management_menu
+            ;;
+        # Other options...
+    esac
+    read -p "🔁 Press Enter to return to menu..."
+}
+
+### ──────────────── ENTRYPOINT ────────────────
+[[ "$EUID" -ne 0 ]] && { colorize purple "Run as root"; exit 1; }
+install_dependency
+generate_token
+download_backhaul
+
+while true; do
+    main_menu
+done
