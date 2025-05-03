@@ -3,9 +3,6 @@
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
-CYAN='\e[36m'
-MAGENTA="\e[95m"
-NC='\033[0m' # No Color
 
 # Define script version
 SCRIPT_VERSION="v0.6.0"
@@ -138,15 +135,12 @@ download_and_extract_backhaul() {
     case "$ARCH" in
         x86_64)
             DOWNLOAD_URL="https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul_amd64.tar.gz"
-            ;;
         arm64|aarch64)
             DOWNLOAD_URL="https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul_arm64.tar.gz"
-            ;;
         *)
             echo -e "${RED}Unsupported architecture: $ARCH.${NC}"
             sleep 1
             exit 1
-            ;;
     esac
 
     if [ -z "$DOWNLOAD_URL" ]; then
@@ -1366,30 +1360,6 @@ view_service_status (){
 
 
 
-hawshemi_script(){
-clear
-
-echo -e "${MAGENTA}Special thanks to Hawshemi, the author of optimizer script...${NC}"
-sleep 2
-# Get the operating system name
-os_name=$(lsb_release -is)
-
-echo -e 
-# Check if the operating system is Ubuntu
-if [ "$os_name" == "Ubuntu" ]; then
-  echo -e "${GREEN}The operating system is Ubuntu.${NC}"
-  sleep 1
-else
-  echo -e "${RED} The operating system is not Ubuntu.${NC}"
-  sleep 2
-  return
-fi
-
-
-sysctl_optimizations
-limits_optimizations
-ask_reboot
-read -p "Press Enter to continue..."
 }
 
 #!/bin/bash
@@ -1494,20 +1464,19 @@ fi
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
-CYAN='\e[36m'
-MAGENTA="\e[95m"
-NC='\033[0m' # No Color
 
-# Function to display menu
-    colorize cyan " 1 ) Core manager"
-    colorize cyan " 2) Configure a new tunnel [IPv4/IPv6]" bold
-    colorize cyan   " 3 ) Tunnel management menu" bold
-    colorize cyan  " 4) Check tunnels status" bold
-    colorize cyan " 5) Web Service"
-    colorize cyan " 6) Update Script"
-    colorize YELLOW " 0. Exit"
+display_menu() {
+    colorize GREEN " 1 ) Core manager"
+    colorize GREEN " 2) Configure a new tunnel [IPv4/IPv6]" bold
+    colorize GREEN   " 3) Tunnel management menu" bold
+    colorize GREEN  " 4) Check tunnels status" bold
+    colorize GREEN " 5) Web Service"
+    colorize GREEN " 6) Update Script"
+    colorize RED " 0. Exit"
     echo
     echo "-------------------------------"
+}
+
 read_option() {
     read -p "Enter your choice [0-6]: " choice
     case $choice in
@@ -1516,7 +1485,6 @@ read_option() {
         4) check_tunnel_status ;;
         1) download_and_extract_backhaul "menu";;
         6) update_script ;;
-         ;;
         0) exit 0 ;;
         *) echo -e "${RED} Invalid option!${NC}" && sleep 1 ;;
     esac
