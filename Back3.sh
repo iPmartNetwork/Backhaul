@@ -1192,3 +1192,70 @@ main_menu() {
         esac
     done
 }
+
+
+
+
+core_manager() {
+    while true; do
+        clear
+        colorize indigo "╔═════════════════════╗"
+        colorize indigo "║   ⚙️  Core Manager    ║"
+        colorize indigo "╚═════════════════════╝"
+        echo -e "${YELLOW}1) Install Backhaul Core"
+        echo "2) Update Backhaul Core"
+        echo "3) Remove Backhaul Core"
+        echo -e "0) Return to Main Menu${NC}"
+        echo
+        read -rp "Enter your choice: " core_choice
+
+        case "$core_choice" in
+            1) install_backhaul_core ;;
+            2) update_backhaul_core ;;
+            3) remove_backhaul_core ;;
+            0) return ;;
+            *) colorize purple "Invalid choice. Try again." ;;
+        esac
+        echo
+        read -rp "Press Enter to continue..." pause
+    done
+}
+
+install_backhaul_core() {
+    mkdir -p "$config_dir"
+    arch=$(uname -m)
+    case "$arch" in
+        x86_64) arch="amd64" ;;
+        aarch64) arch="arm64" ;;
+        *) colorize purple "Unsupported architecture: $arch"; return 1 ;;
+    esac
+
+    url="https://github.com/Musixal/Backhaul/releases/latest/download/backhaul-$arch"
+    colorize indigo "Downloading Backhaul Core from $url"
+    curl -Lo "$config_dir/backhaul" "$url" && chmod +x "$config_dir/backhaul"
+
+    if [[ -f "$config_dir/backhaul" ]]; then
+        colorize indigo "Backhaul Core installed successfully."
+    else
+        colorize purple "Failed to install Backhaul Core."
+    fi
+}
+
+update_backhaul_core() {
+    if [[ ! -f "$config_dir/backhaul" ]]; then
+        colorize purple "Backhaul Core not found. Please install it first."
+        return
+    fi
+
+    rm -f "$config_dir/backhaul"
+    install_backhaul_core
+}
+
+remove_backhaul_core() {
+    if [[ -f "$config_dir/backhaul" ]]; then
+        rm -f "$config_dir/backhaul"
+        colorize indigo "Backhaul Core removed."
+    else
+        colorize purple "Backhaul Core is not installed."
+    fi
+}
