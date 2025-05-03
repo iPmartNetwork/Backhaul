@@ -26,7 +26,8 @@ fi
     colorize indigo "1) Configure for IRAN server" bold
     colorize purple "2) Configure for KHAREJ server" bold
     echo
-    read -p "Enter your choice: " configure_choice
+    read -p "Enter your choice (or M to return to Main Menu): " configure_choice
+    [[ "$configure_choice" =~ ^[Mm]$ ]] && return
     case "$configure_choice" in
         1) iran_server_configuration ;;
         2) kharej_server_configuration ;;
@@ -1173,9 +1174,24 @@ edit_tunnel() {
 
 
 
+show_header() {
+    clear
+    echo -e "${INDIGO}"
+    echo "╔══════════════════════════════════════════════════╗"
+    echo "║            🚀 Backhaul Tunnel Manager           ║"
+    echo "╠══════════════════════════════════════════════════╣"
+    echo "║ 📜 Version : $script_version                             ║"
+    echo "║ 👤 Author  : $script_author                         ║"
+    echo "║ 🗓  Date    : $script_date                             ║"
+    echo "╚══════════════════════════════════════════════════╝"
+    echo -e "📂 Script Path: $(realpath "$0")"
+    echo -e "🕒 Executed at: $(date '+%Y-%m-%d %H:%M:%S')"
+    echo -e "${NC}"
+}
+
 main_menu() {
     while true; do
-        clear
+        show_header
         echo -e "${INDIGO}"
         echo "╔═══════════════════════════════════╗"
         echo "║        Backhaul Main Menu        ║"
@@ -1200,7 +1216,7 @@ main_menu() {
             5) web_panel_manager ;;
             6) update_script ;;
             0) exit 0 ;;
-            *) colorize purple "Invalid option. Please try again."; sleep 1 ;;
+            *) echo -e "\a"; colorize purple "Invalid option. Please try again."; sleep 1 ;;
         esac
     done
 }
@@ -1210,7 +1226,7 @@ main_menu() {
 
 core_manager() {
     while true; do
-        clear
+        show_header
         colorize indigo "╔═════════════════════╗"
         colorize indigo "║   ⚙️  Core Manager    ║"
         colorize indigo "╚═════════════════════╝"
@@ -1219,8 +1235,12 @@ core_manager() {
         echo "3) Remove Backhaul Core"
         echo -e "0) Return to Main Menu${NC}"
         echo
-        read -rp "Enter your choice: " core_choice
+        read -rp "Enter your choice (or M to return to Main Menu): " core_choice
 
+        read -r core_choice
+        [[ "$core_choice" =~ ^[Mm]$ ]] && return
+        read -r core_choice
+        [[ "$core_choice" =~ ^[Mm]$ ]] && return
         case "$core_choice" in
             1) install_backhaul_core ;;
             2) update_backhaul_core ;;
@@ -1355,7 +1375,7 @@ update_script() {
 
 web_panel_manager() {
     while true; do
-        clear
+        show_header
         colorize indigo "🌐 Web Panel Manager" bold
         echo
         echo -e "${YELLOW}1) Install Web Panel"
@@ -1363,8 +1383,12 @@ web_panel_manager() {
         echo "3) Check Panel Status"
         echo -e "0) Return to Main Menu${NC}"
         echo
-        read -rp "Enter your choice: " panel_choice
+        read -rp "Enter your choice (or M to return to Main Menu): " panel_choice
 
+        read -r panel_choice
+        [[ "$panel_choice" =~ ^[Mm]$ ]] && return
+        read -r panel_choice
+        [[ "$panel_choice" =~ ^[Mm]$ ]] && return
         case "$panel_choice" in
             1) install_web_panel ;;
             2) uninstall_web_panel ;;
