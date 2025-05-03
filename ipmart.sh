@@ -200,7 +200,7 @@ EOF
 
 # Function to display server location and IP
 display_server_info() {
-    echo -e "\e[93mâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\e[0m"  
+    echo -e "\e[93m═══════════════════════════════════════════\e[0m"  
  
     echo -e "${CYAN}IP Address:${NC} $SERVER_IP"
     echo -e "${CYAN}Location:${NC} $SERVER_COUNTRY "
@@ -214,7 +214,7 @@ display_backhaul_core_status() {
     else
         echo -e "${CYAN}Backhaul Core:${NC} ${RED}Not installed${NC}"
     fi
-    echo -e "\e[93mâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\e[0m"  
+    echo -e "\e[93m═══════════════════════════════════════════\e[0m"  
 }
 
 # Function to check if a given string is a valid IPv6 address
@@ -1881,7 +1881,8 @@ read_option() {
         0) exit 0 ;;
         *) echo -e "${RED} Invalid option!${NC}" && sleep 1 ;;
     esac
-
+}
+    esac
 }
 
 # Main script
