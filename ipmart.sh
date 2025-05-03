@@ -1899,6 +1899,7 @@ core_manager_menu() {
         echo -e " 2) Check tunnel status"
         echo -e " 3) Remove Backhaul Core"
         echo -e " 0) Return to main menu"
+    esac
         echo
         read -p "Select an option: " core_choice
         case $core_choice in
