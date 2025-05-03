@@ -24,14 +24,14 @@ colorize() {
     local style="$3"
 
     case "$color" in
-        purple) code="\033[35m" ;;
-        indigo) code="\033[94m" ;;
-        yellow) code="\033[93m" ;;
-        reset)  code="\033[0m"  ;;
-        *) code="\033[0m" ;;
+        purple) code="\e[35m" ;;
+        indigo) code="\e[94m" ;;
+        yellow) code="\e[93m" ;;
+        reset)  code="\e[0m"  ;;
+        *) code="\e[0m" ;;
     esac
 
-    [[ "$style" == "bold" ]] && code="\033[1m$code"
+    [[ "$style" == "bold" ]] && code="\e[1m$code"
     echo -e "${code}${text}\e[0m"
 }
 
@@ -881,6 +881,7 @@ while true; do
     backup_config_file "${config_dir}/kharej${tunnel_port}.toml"
     cat << EOF > "${config_dir}/kharej${tunnel_port}.toml"
 [client]
+check_connection "$SERVER_ADDR" "$tunnel_port"
     remote_addr = "${SERVER_ADDR}:${tunnel_port}"
 ${edge_ip}
 transport = "${transport}"
@@ -1222,26 +1223,25 @@ main_menu() {
 
 core_manager() {
     while true; do
-        show_header
-        colorize indigo "╔═════════════════════╗"
-        colorize indigo "║   ⚙️  Core Manager    ║"
-        colorize indigo "╚═════════════════════╝"
-        echo -e "${YELLOW}1) Install Backhaul Core"
+        echo "╔═════════════════════╗"
+        echo "║   ⚙️  Core Manager    ║"
+        echo "╚═════════════════════╝"
+        echo "1) Install Backhaul Core"
         echo "2) Update Backhaul Core"
         echo "3) Remove Backhaul Core"
-        echo -e "0) Return to Main Menu${NC}"
-        echo
-        read -rp "Enter your choice (or M to return to Main Menu): " core_choice
-[[ "$core_choice" =~ ^[Mm]$ ]] && return "$core_choice" in
+        echo "M) Return to Main Menu"
+        read -rp "Enter your choice: " core_choice
+        [[ "$core_choice" =~ ^[Mm]$ ]] && return
+
+        case "$core_choice" in
             1) install_backhaul_core ;;
             2) update_backhaul_core ;;
             3) remove_backhaul_core ;;
-            0) return ;;
-            *) colorize purple "Invalid choice. Try again." ;;
+            *) echo "Invalid option. Try again." ;;
         esac
-        echo
+
         read -rp "Press Enter to continue..." pause
-[[ "$pause" =~ ^[Mm]$ ]] && return
+    done
 }
 
 install_backhaul_core() {
@@ -1375,7 +1375,7 @@ web_panel_manager() {
         echo -e "0) Return to Main Menu${NC}"
         echo
         read -rp "Enter your choice (or M to return to Main Menu): " panel_choice
-[[ "$panel_choice" =~ ^[Mm]$ ]] && return "$panel_choice" in
+[[ "$panel_choice" =~ ^[Mm]$ ]] && returncase "$panel_choice" in
             1) install_web_panel ;;
             2) uninstall_web_panel ;;
             3) check_web_panel ;;
@@ -1384,7 +1384,7 @@ web_panel_manager() {
         esac
         echo
         read -rp "Press Enter to continue..." pause
-[[ "$pause" =~ ^[Mm]$ ]] && return
+[[ "$pause" =~ ^[Mm]$ ]] && returndone
 }
 
 install_web_panel() {
