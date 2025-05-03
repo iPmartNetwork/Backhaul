@@ -1203,8 +1203,7 @@ main_menu() {
         
         echo
         read -rp "Please enter your choice: " choice
-
-        case "$choice" in
+[[ "$choice" =~ ^[Mm]$ ]] && returncase "$choice" in
             1) core_manager ;;
             2) configure_tunnel ;;
             3) tunnel_management ;;
@@ -1232,10 +1231,7 @@ core_manager() {
         echo -e "0) Return to Main Menu${NC}"
         echo
         read -rp "Enter your choice (or M to return to Main Menu): " core_choice
-
-         && return
-         && return
-        case "$core_choice" in
+[[ "$core_choice" =~ ^[Mm]$ ]] && returncase "$core_choice" in
             1) install_backhaul_core ;;
             2) update_backhaul_core ;;
             3) remove_backhaul_core ;;
@@ -1244,7 +1240,7 @@ core_manager() {
         esac
         echo
         read -rp "Press Enter to continue..." pause
-    done
+[[ "$pause" =~ ^[Mm]$ ]] && returndone
 }
 
 install_backhaul_core() {
@@ -1354,7 +1350,7 @@ update_script() {
         echo -e "${YELLOW}$remote_url${NC}"
         echo
         read -rp "Press Enter to restart the script..." enter
-        exec "$script_path"
+[[ "$enter" =~ ^[Mm]$ ]] && returnexec "$script_path"
     else
         colorize purple "❌ Failed to update script. Reverting to previous version..."
         mv "$backup_path" "$script_path"
@@ -1378,10 +1374,7 @@ web_panel_manager() {
         echo -e "0) Return to Main Menu${NC}"
         echo
         read -rp "Enter your choice (or M to return to Main Menu): " panel_choice
-
-         && return
-         && return
-        case "$panel_choice" in
+[[ "$panel_choice" =~ ^[Mm]$ ]] && returncase "$panel_choice" in
             1) install_web_panel ;;
             2) uninstall_web_panel ;;
             3) check_web_panel ;;
@@ -1390,7 +1383,7 @@ web_panel_manager() {
         esac
         echo
         read -rp "Press Enter to continue..." pause
-    done
+[[ "$pause" =~ ^[Mm]$ ]] && returndone
 }
 
 install_web_panel() {
