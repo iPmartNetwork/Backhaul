@@ -1523,14 +1523,14 @@ update_script() {
 install_backhaul_core() {
     echo "[+] Installing Backhaul Core..."
     mkdir -p /etc/backhaul
-    curl -fsSL -o /etc/backhaul/backhaul-core https://example.com/backhaul-core
+    curl -fsSL -o /etc/backhaul/backhaul-core https://raw.githubusercontent.com/iPmartNetwork/إ/main/backhaul-core
     chmod +x /etc/backhaul/backhaul-core
     echo "[✓] Installed at /etc/backhaul/backhaul-core"
 }
 
 update_backhaul_core() {
     echo "[~] Updating Backhaul Core..."
-    curl -fsSL -o /etc/backhaul/backhaul-core https://example.com/backhaul-core
+    curl -fsSL -o /etc/backhaul/backhaul-core https://raw.githubusercontent.com/iPmartNetwork/backhaul-core/main/backhaul-core
     chmod +x /etc/backhaul/backhaul-core
     echo "[✓] Updated successfully."
 }
