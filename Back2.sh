@@ -104,3 +104,7 @@ main_menu() {
 }
 
 main_menu
+
+# --- Enhanced Tunnel Management ---
+
+[CONTENT OMITTED: See previous message for full script body]
