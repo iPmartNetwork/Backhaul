@@ -1185,38 +1185,7 @@ show_header() {
     
 }
 
-main_menu() {
-    while true; do
-        show_header
-        echo -e "${INDIGO}"
-        echo "╔═══════════════════════════════════╗"
-        echo "║        Backhaul Main Menu        ║"
-        echo "╠══════════════════════════════════╣"
-        echo "║ 1) ⚙️  Core Manager               ║"
-        echo "║ 2) 🛠  Configure Tunnel           ║"
-        echo "║ 3) 🔧 Tunnel Manager             ║"
-        echo "║ 4) 🚀 Optimize System            ║"
-        echo "║ 5) 🌐 Web Panel Manager          ║"
-        echo "║ 6) ♻️ Update Script              ║"
-        echo "║ 0) ❌ Exit                       ║"
-        echo "╚══════════════════════════════════╝"
-        echo -e "${NC}"
-        echo
-        read -rp "Please enter your choice: " choice
-        [[ "$choice" =~ ^[Mm]$ ]] && return
 
-        case "$choice" in
-            1) core_manager ;;
-            2) configure_tunnel ;;
-            3) tunnel_management ;;
-            4) optimize_system ;;
-            5) web_panel_manager ;;
-            6) update_script ;;
-            0) exit 0 ;;
-            *) echo "Invalid option. Try again."; sleep 1 ;;
-        esac
-    done
-}
 
 
 
@@ -1441,3 +1410,118 @@ check_web_panel() {
 
 
 main_menu
+
+
+##############################################
+# Main Menu & Submenu Definitions (Rewritten)
+##############################################
+
+main_menu() {
+    while true; do
+        clear
+        echo "╔════════════════════════════════════╗"
+        echo "║     🚀 Backhaul Management Menu    ║"
+        echo "╠════════════════════════════════════╣"
+        echo "║ 1) ⚙️  Core Manager                 ║"
+        echo "║ 2) 🔧 Configure Tunnel             ║"
+        echo "║ 3) 🎯 Tunnel Manager               ║"
+        echo "║ 4) 🚀 Optimize System              ║"
+        echo "║ 5) 🌐 Web Panel                    ║"
+        echo "║ 6) ♻️ Update Script                ║"
+        echo "║ 0) ❌ Exit                         ║"
+        echo "╚════════════════════════════════════╝"
+        read -rp "Enter your choice: " choice
+        case "$choice" in
+            1) core_manager ;;
+            2) configure_tunnel ;;
+            3) tunnel_management ;;
+            4) optimize_system ;;
+            5) web_panel_manager ;;
+            6) update_script ;;
+            0) exit 0 ;;
+            *) echo "Invalid choice. Please try again."; sleep 1 ;;
+        esac
+    done
+}
+
+core_manager() {
+    while true; do
+        clear
+        echo "╔═════════════════════╗"
+        echo "║   ⚙️  Core Manager    ║"
+        echo "╚═════════════════════╝"
+        echo "1) Install Backhaul Core"
+        echo "2) Update Backhaul Core"
+        echo "3) Remove Backhaul Core"
+        echo "M) Return to Main Menu"
+        read -rp "Enter your choice: " core_choice
+        [[ "$core_choice" =~ ^[Mm]$ ]] && return
+        case "$core_choice" in
+            1) install_backhaul_core ;;
+            2) update_backhaul_core ;;
+            3) remove_backhaul_core ;;
+            *) echo "Invalid option. Try again." ;;
+        esac
+        read -rp "Press Enter to continue..." pause
+    done
+}
+
+configure_tunnel() {
+    clear
+    echo "🔧 Configure Tunnel"
+    echo "1) Configure for IRAN Server"
+    echo "2) Configure for KHAREJ Server"
+    echo "M) Return to Main Menu"
+    read -rp "Enter your choice: " conf_choice
+    [[ "$conf_choice" =~ ^[Mm]$ ]] && return
+    case "$conf_choice" in
+        1) iran_server_configuration ;;
+        2) kharej_server_configuration ;;
+        *) echo "Invalid option. Try again."; sleep 1 ;;
+    esac
+}
+
+tunnel_management() {
+    clear
+    echo "🎯 Tunnel Management"
+    echo "1) Restart Tunnel"
+    echo "2) Stop Tunnel"
+    echo "3) View Logs"
+    echo "M) Return to Main Menu"
+    read -rp "Enter your choice: " tm_choice
+    [[ "$tm_choice" =~ ^[Mm]$ ]] && return
+    case "$tm_choice" in
+        1) restart_tunnel ;;
+        2) stop_tunnel ;;
+        3) view_logs ;;
+        *) echo "Invalid option. Try again."; sleep 1 ;;
+    esac
+}
+
+optimize_system() {
+    echo "🚀 Optimizing system..."
+    sysctl -w net.core.default_qdisc=fq
+    sysctl -w net.ipv4.tcp_congestion_control=bbr
+    echo "Done. Press enter to continue."
+    read
+}
+
+web_panel_manager() {
+    echo "🌐 Web Panel"
+    echo "1) Install Web Panel"
+    echo "2) Remove Web Panel"
+    echo "M) Return to Main Menu"
+    read -rp "Enter your choice: " wp_choice
+    [[ "$wp_choice" =~ ^[Mm]$ ]] && return
+    case "$wp_choice" in
+        1) install_web_panel ;;
+        2) remove_web_panel ;;
+        *) echo "Invalid option. Try again."; sleep 1 ;;
+    esac
+}
+
+update_script() {
+    echo "♻️ Updating Script..."
+    echo "Not implemented yet."
+    sleep 1
+}
