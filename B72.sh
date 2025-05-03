@@ -1284,41 +1284,58 @@ main_menu
 
 
 
+
+
+
 kharej_server_configuration() {
+    load_last_settings
     clear
-    colorize cyan "Configuring Kharej server" bold
-    
+    colorize purple "Configuring Kharej server" bold
+
     echo
 
     # Prompt for IRAN server IP address
-    while true; do
+
+
+
+while true; do
         echo -ne "[*] IRAN server IP address [IPv4/IPv6]: "
         read -r SERVER_ADDR
+
+        if [[ "$SERVER_ADDR" =~ : ]]; then
+            if ! check_ipv6 "$SERVER_ADDR"; then
+                colorize purple "Invalid IPv6 address format. Please try again."
+                continue
+            fi
+        fi
+
         if [[ -n "$SERVER_ADDR" ]]; then
             break
         else
-            colorize red "Server address cannot be empty. Please enter a valid address."
+            colorize purple "Server address cannot be empty. Please enter a valid address."
             echo
         fi
     done
-    
+
     echo
 
     # Read the tunnel port
-    while true; do
+
+
+
+while true; do
         echo -ne "[*] Tunnel port: "
         read -r tunnel_port
 
         if [[ "$tunnel_port" =~ ^[0-9]+$ ]] && [ "$tunnel_port" -gt 22 ] && [ "$tunnel_port" -le 65535 ]; then
             break
         else
-            colorize red "Please enter a valid port number between 23 and 65535"
+            colorize purple "Please enter a valid port number between 23 and 65535"
             echo
         fi
     done
 
     echo
-
 
     # Initialize transport variable
     local transport=""
@@ -1327,16 +1344,19 @@ kharej_server_configuration() {
         read -r transport
 
         if [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; then
-            colorize red "Invalid transport type. Please choose from tcp, tcpmux, utcpmux, ws, wsmux, uwsmux, udp, tcptun, faketcptun."
+            colorize purple "Invalid transport type. Please choose from tcp, tcpmux, utcpmux, ws, wsmux, uwsmux, udp, tcptun, faketcptun."
             echo
         fi
     done
 
-    # TUN Device Name 
+    # TUN Device Name
     local tun_name="backhaul"
     if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
         echo
-        while true; do
+
+
+
+while true; do
             echo -ne "[-] TUN Device Name (default backhaul): "
             read -r tun_name
 
@@ -1348,7 +1368,7 @@ kharej_server_configuration() {
                 echo
                 break
             else
-                colorize red "Please enter a valid TUN device name."
+                colorize purple "Please enter a valid TUN device name."
                 echo
             fi
         done
@@ -1357,7 +1377,10 @@ kharej_server_configuration() {
     # TUN Subnet
     local tun_subnet="10.10.10.0/24"
     if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
-        while true; do
+
+
+
+while true; do
             echo -ne "[-] TUN Subnet (default 10.10.10.0/24): "
             read -r tun_subnet
 
@@ -1379,15 +1402,18 @@ kharej_server_configuration() {
                 fi
             fi
 
-            colorize red "Please enter a valid subnet in CIDR notation (e.g., 10.10.10.0/24)."
+            colorize purple "Please enter a valid subnet in CIDR notation (e.g., 10.10.10.0/24)."
             echo
         done
     fi
 
     # TUN MTU
-    local mtu="1500"    
+    local mtu="1500"
     if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
-        while true; do
+
+
+
+while true; do
             echo -ne "[-] TUN MTU (default 1500): "
             read -r mtu
 
@@ -1401,25 +1427,28 @@ kharej_server_configuration() {
                 break
             fi
 
-            colorize red "Please enter a valid MTU value between 576 and 9000."
+            colorize purple "Please enter a valid MTU value between 576 and 9000."
             echo
         done
     fi
-    
+
 
     # Edge IP
     if [[ "$transport" =~ ^(ws|wsmux|uwsmux)$ ]]; then
-        while true; do
+
+
+
+while true; do
             echo
             echo -ne "[-] Edge IP/Domain (optional)(press enter to disable): "
             read -r edge_ip
-    
+
             # Set default if input is empty
             if [[ -z "$edge_ip" ]]; then
                 edge_ip="#edge_ip = \"188.114.96.0\""
                 break
             fi
-    
+
             # format the edge_ip variable
             edge_ip="edge_ip = \"$edge_ip\""
             break
@@ -1427,7 +1456,7 @@ kharej_server_configuration() {
     else
         edge_ip="#edge_ip = \"188.114.96.0\""
     fi
-    
+
     echo
 
     # Security Token
@@ -1437,7 +1466,7 @@ kharej_server_configuration() {
 
     # Enable TCP_NODELAY
     local nodelay=""
-    
+
     # Check transport type
     if [[ "$transport" == "udp" ]]; then
         nodelay=false
@@ -1446,115 +1475,123 @@ kharej_server_configuration() {
         while [[ "$nodelay" != "true" && "$nodelay" != "false" ]]; do
             echo -ne "[-] Enable TCP_NODELAY (true/false)(default true): "
             read -r nodelay
-            
+
             if [[ -z "$nodelay" ]]; then
                 nodelay=true
             fi
-        
-        
+
+
             if [[ "$nodelay" != "true" && "$nodelay" != "false" ]]; then
-                colorize red "Invalid input. Please enter 'true' or 'false'."
+                colorize purple "Invalid input. Please enter 'true' or 'false'."
                 echo
             fi
         done
     fi
 
-	    
+
     # Connection Pool
     local pool=8
     if [[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; then
-    	echo 
-        while true; do
+    	echo
+
+
+
+while true; do
             echo -ne "[-] Connection Pool (default 8): "
             read -r pool
 
             if [[ -z "$pool" ]]; then
                 pool=8
             fi
-            
-            
+
+
             if [[ "$pool" =~ ^[0-9]+$ ]] && [ "$pool" -gt 1 ] && [ "$pool" -le 1024 ]; then
                 break
             else
-                colorize red "Please enter a valid connection pool between 1 and 1024."
+                colorize purple "Please enter a valid connection pool between 1 and 1024."
                 echo
             fi
         done
     fi
 
-
     # Mux Version
     if [[ "$transport" =~ ^(tcpmux|wsmux|utcpmux|uwsmux)$ ]]; then
-        while true; do
-            echo 
+
+
+
+while true; do
+            echo
             echo -ne "[-] Mux Version (1 or 2) (default 2): "
             read -r mux_version
-    
+
             # Set default to 1 if input is empty
             if [[ -z "$mux_version" ]]; then
                 mux_version=2
             fi
-            
+
             # Validate the input for version 1 or 2
             if [[ "$mux_version" =~ ^[0-9]+$ ]] && [ "$mux_version" -ge 1 ] && [ "$mux_version" -le 2 ]; then
                 break
             else
-                colorize red "Please enter a valid mux version: 1 or 2."
+                colorize purple "Please enter a valid mux version: 1 or 2."
                 echo
             fi
         done
     else
         mux_version=2
     fi
-    
+
     echo
-    
+
 	# Enable Sniffer
     local sniffer=""
     while [[ "$sniffer" != "true" && "$sniffer" != "false" ]]; do
         echo -ne "[-] Enable Sniffer (true/false)(default false): "
         read -r sniffer
-        
+
         if [[ -z "$sniffer" ]]; then
             sniffer=false
         fi
-            
+
         if [[ "$sniffer" != "true" && "$sniffer" != "false" ]]; then
-            colorize red "Invalid input. Please enter 'true' or 'false'."
+            colorize purple "Invalid input. Please enter 'true' or 'false'."
             echo
         fi
     done
-	
-	echo 
-	
+
+	echo
+
     # Get Web Port
 	local web_port=""
-	while true; do
+
+
+
+while true; do
 	    echo -ne "[-] Enter Web Port (default 0 to disable): "
 	    read -r web_port
 
         if [[ -z "$web_port" ]]; then
             web_port=0
         fi
-        
+
 	    if [[ "$web_port" == "0" ]]; then
 	        break
 	    elif [[ "$web_port" =~ ^[0-9]+$ ]] && ((web_port >= 23 && web_port <= 65535)); then
 	        if check_port "$web_port" "tcp"; then
-	            colorize red "Port $web_port is already in use. Please choose a different port."
+	            colorize purple "Port $web_port is already in use. Please choose a different port."
 	            echo
 	        else
 	            break
 	        fi
 	    else
-	        colorize red "Invalid port. Please enter a number between 22 and 65535, or 0 to disable."
+	        colorize purple "Invalid port. Please enter a number between 22 and 65535, or 0 to disable."
 	        echo
 	    fi
 	done
 
-    
 
-    # IP Limit 
+
+    # IP Limit
     if [[ ! "$transport" =~ ^(ws|udp|tcptun|faketcptun)$ ]]; then
         # Enable IP Limit
         local ip_limit=""
@@ -1562,13 +1599,13 @@ kharej_server_configuration() {
             echo
             echo -ne "[-] Enable IP Limit for X-UI Panel (true/false)(default false): "
             read -r ip_limit
-            
+
             if [[ -z "$ip_limit" ]]; then
                 ip_limit=false
             fi
-                
+
             if [[ "$ip_limit" != "true" && "$ip_limit" != "false" ]]; then
-                colorize red "Invalid input. Please enter 'true' or 'false'."
+                colorize purple "Invalid input. Please enter 'true' or 'false'."
                 echo
             fi
         done
@@ -1577,11 +1614,13 @@ kharej_server_configuration() {
 	    ip_limit="false"
 	fi
 
-
     # Generate client configuration file
+    save_last_settings
+    backup_config_file "${config_dir}/kharej${tunnel_port}.toml"
     cat << EOF > "${config_dir}/kharej${tunnel_port}.toml"
 [client]
-remote_addr = "${SERVER_ADDR}:${tunnel_port}"
+check_connection "$SERVER_ADDR" "$tunnel_port"
+    remote_addr = "${SERVER_ADDR}:${tunnel_port}"
 ${edge_ip}
 transport = "${transport}"
 token = "${token}"
@@ -1605,7 +1644,6 @@ tun_subnet = "${tun_subnet}"
 mtu = ${mtu}
 EOF
 
-
     echo
 
     # Create the systemd service unit file
@@ -1616,7 +1654,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=${config_dir}/backhaul_premium -c ${config_dir}/kharej${tunnel_port}.toml
+ExecStart=${config_dir}/backhaul -c ${config_dir}/kharej${tunnel_port}.toml
 Restart=always
 RestartSec=3
 
@@ -1629,12 +1667,14 @@ EOF
 
     # Enable and start the service
     if systemctl enable --now "${service_dir}/backhaul-kharej${tunnel_port}.service" >/dev/null 2>&1; then
-        colorize green "Kharej service with port $tunnel_port enabled to start on boot and started."
+        colorize indigo "Kharej service with port $tunnel_port enabled to start on boot and started."
     else
-        colorize red "Failed to enable service with port $tunnel_port. Please check your system configuration."
+        colorize purple "Failed to enable service with port $tunnel_port. Please check your system configuration."
         return 1
     fi
 
     echo
-    colorize green "Kharej server configuration completed successfully." bold
+    log_action "Created KHAREJ tunnel on port $tunnel_port"
+    log_detailed "CREATE" "KHAREJ tunnel created to $SERVER_ADDR:$tunnel_port with transport $transport"
+    colorize indigo "Kharej server configuration completed successfully." bold
 }
