@@ -103,4 +103,4 @@ Logs for each tunnel are saved in:
 
 ## 📞 Support
 
-Telegram: [@anony_iPmart_Network](https://t.me/iPmart_Network)
+Telegram: [@iPmart_Network](https://t.me/iPmart_Network)
