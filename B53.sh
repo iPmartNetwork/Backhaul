@@ -55,7 +55,7 @@ configure_tunnel() {
 
 # check if the Backhaul-core installed or not
 if [[ ! -d "$config_dir" ]]; then
-    echo -e "\n${PURPLE}Backhaul-Core directory not found. Install it first through 'Install Backhaul core' option.${NC}\n"
+    echo -e "\nBackhaul-Core directory not found. Install it first through 'Install Backhaul core' option.\n"
     read -p "Press Enter to continue..."
     return 1
 fi
@@ -63,15 +63,15 @@ fi
     clear
 
     echo
-    colorize indigo "1) Configure for IRAN server" bold
-    colorize purple "2) Configure for KHAREJ server" bold
+    echo "1) Configure for IRAN server"
+    echo "2) Configure for KHAREJ server"
     echo
     read -p "Enter your choice (or M to return to Main Menu): " configure_choice
     [[ "$configure_choice" =~ ^[Mm]$ ]] && return
     case "$configure_choice" in
         1) iran_server_configuration ;;
         2) kharej_server_configuration ;;
-        *) echo -e "${PURPLE}Invalid option!${NC}" && sleep 1 ;;
+        *) echo -e "Invalid option!" && sleep 1 ;;
     esac
     echo
     read -p "Press Enter to continue..."
@@ -79,7 +79,7 @@ fi
 
 iran_server_configuration() {
     clear
-    colorize purple "Configuring IRAN server" bold
+    echo "Configuring IRAN server"
 
     echo
 
@@ -94,13 +94,11 @@ while true; do
 
         if [[ "$tunnel_port" =~ ^[0-9]+$ ]] && [ "$tunnel_port" -gt 22 ] && [ "$tunnel_port" -le 65535 ]; then
             if check_port "$tunnel_port" "tcp"; then
-                colorize purple "Port $tunnel_port is in use."
-            else
+                echo "Port $tunnel_port is in use."
                 break
             fi
         else
-            colorize purple "Please enter a valid port number between 23 and 65535."
-            echo
+            echo "Please enter a valid port number between 23 and 65535."
         fi
     done
 
@@ -113,8 +111,7 @@ while true; do
         read -r transport
 
         if [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; then
-            colorize purple "Invalid transport type. Please choose from tcp, tcpmux, utcpmux, ws, wsmux, uwsmux, udp, tcptun, faketcptun."
-            echo
+            echo "Invalid transport type. Please choose from tcp, tcpmux, utcpmux, ws, wsmux, uwsmux, udp, tcptun, faketcptun."
         fi
     done
 
@@ -140,8 +137,7 @@ while true; do
                 echo
                 break
             else
-                colorize purple "Please enter a valid TUN device name."
-                echo
+                echo "Please enter a valid TUN device name."
             fi
         done
     fi
@@ -176,8 +172,7 @@ while true; do
                 fi
             fi
 
-            colorize purple "Please enter a valid subnet in CIDR notation (e.g., 10.10.10.0/24)."
-            echo
+            echo "Please enter a valid subnet in CIDR notation (e.g., 10.10.10.0/24)."
         done
     fi
 
@@ -203,8 +198,7 @@ while true; do
                 break
             fi
 
-            colorize purple "Please enter a valid MTU value between 576 and 9000."
-            echo
+            echo "Please enter a valid MTU value between 576 and 9000."
         done
     fi
 
@@ -223,8 +217,7 @@ while true; do
 
 
 	        if [[ "$accept_udp" != "true" && "$accept_udp" != "false" ]]; then
-	            colorize purple "Invalid input. Please enter 'true' or 'false'."
-	            echo
+	            echo "Invalid input. Please enter 'true' or 'false'."
 	        fi
 	    done
 	else
@@ -254,8 +247,7 @@ while true; do
             if [[ "$channel_size" =~ ^[0-9]+$ ]] && [ "$channel_size" -gt 64 ] && [ "$channel_size" -le 8192 ]; then
                 break
             else
-                colorize purple "Please enter a valid channel size between 64 and 8192."
-                echo
+                echo "Please enter a valid channel size between 64 and 8192."
             fi
         done
 
@@ -280,8 +272,7 @@ while true; do
 
 
             if [[ "$nodelay" != "true" && "$nodelay" != "false" ]]; then
-                colorize purple "Invalid input. Please enter 'true' or 'false'."
-                echo
+                echo "Invalid input. Please enter 'true' or 'false'."
             fi
         done
     fi
@@ -307,8 +298,7 @@ while true; do
             if [[ "$heartbeat" =~ ^[0-9]+$ ]] && [ "$heartbeat" -gt 1 ] && [ "$heartbeat" -le 240 ]; then
                 break
             else
-                colorize purple "Please enter a valid heartbeat between 1 and 240."
-                echo
+                echo "Please enter a valid heartbeat between 1 and 240."
             fi
         done
 
@@ -340,8 +330,7 @@ while true; do
             if [[ "$mux" =~ ^[0-9]+$ ]] && [ "$mux" -gt 0 ] && [ "$mux" -le 1000 ]; then
                 break
             else
-                colorize purple "Please enter a valid concurrency between 0 and 1000"
-                echo
+                echo "Please enter a valid concurrency between 0 and 1000"
             fi
         done
     else
@@ -370,8 +359,7 @@ while true; do
             if [[ "$mux_version" =~ ^[0-9]+$ ]] && [ "$mux_version" -ge 1 ] && [ "$mux_version" -le 2 ]; then
                 break
             else
-                colorize purple "Please enter a valid mux version: 1 or 2."
-                echo
+                echo "Please enter a valid mux version: 1 or 2."
             fi
         done
     else
@@ -392,8 +380,7 @@ while true; do
         fi
 
         if [[ "$sniffer" != "true" && "$sniffer" != "false" ]]; then
-            colorize purple "Invalid input. Please enter 'true' or 'false'."
-            echo
+            echo "Invalid input. Please enter 'true' or 'false'."
         fi
     done
 
@@ -417,14 +404,12 @@ while true; do
 	        break
 	    elif [[ "$web_port" =~ ^[0-9]+$ ]] && ((web_port >= 23 && web_port <= 65535)); then
 	        if check_port "$web_port" "tcp"; then
-	            colorize purple "Port $web_port is already in use. Please choose a different port."
-	            echo
+	            echo "Port $web_port is already in use. Please choose a different port."
 	        else
 	            break
 	        fi
 	    else
-	        colorize purple "Invalid port. Please enter a number between 22 and 65535, or 0 to disable."
-	        echo
+	        echo "Invalid port. Please enter a number between 22 and 65535, or 0 to disable."
 	    fi
 	done
 
@@ -443,8 +428,7 @@ while true; do
             fi
 
             if [[ "$proxy_protocol" != "true" && "$proxy_protocol" != "false" ]]; then
-                colorize purple "Invalid input. Please enter 'true' or 'false'."
-                echo
+                echo "Invalid input. Please enter 'true' or 'false'."
             fi
         done
     else
@@ -457,7 +441,7 @@ while true; do
 
     if [[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; then
         # Display port format options
-        colorize indigo "[*] Supported Port Formats:" bold
+        echo "[*] Supported Port Formats:"
         echo "1. 443-600                  - Listen on all ports in the range 443 to 600."
         echo "2. 443-600:5201             - Listen on all ports in the range 443 to 600 and forward traffic to 5201."
         echo "3. 443-600=1.1.1.1:5201     - Listen on all ports in the range 443 to 600 and forward traffic to 1.1.1.1:5201."
@@ -531,8 +515,7 @@ EOF
 	        # Specific local IP with forwarding to a specific remote IP and port (e.g., 127.0.0.2:443=1.1.1.1:5201)
 	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
 	    else
-	        colorize purple "[ERROR] Invalid port mapping: $port. Skipping."
-	        echo
+	        echo "[ERROR] Invalid port mapping: $port. Skipping."
 	    fi
 	done
 
@@ -540,9 +523,7 @@ EOF
 
 	echo
 
-	colorize indigo "Configuration generated successfully!"
-
-    echo
+	echo "Configuration generated successfully!"
 
     # Create the systemd service
     cat << EOF > "${service_dir}/backhaul-iran${tunnel_port}.service"
@@ -563,22 +544,20 @@ EOF
     # Reload and enable service
     systemctl daemon-reload >/dev/null 2>&1
     if systemctl enable --now "${service_dir}/backhaul-iran${tunnel_port}.service" >/dev/null 2>&1; then
-        colorize indigo "Iran service with port $tunnel_port enabled to start on boot and started."
-    else
-        colorize purple "Failed to enable service with port $tunnel_port. Please check your system configuration."
-        return 1
+        echo "Iran service with port $tunnel_port enabled to start on boot and started."
+        echo "Failed to enable service with port $tunnel_port. Please check your system configuration." 1
     fi
 
     echo
     log_action "Created IRAN tunnel on port $tunnel_port"
     log_detailed "CREATE" "IRAN tunnel created on port $tunnel_port with transport $transport"
-    colorize indigo "IRAN server configuration completed successfully." bold
+    echo "IRAN server configuration completed successfully."
 }
 
 kharej_server_configuration() {
     load_last_settings
     clear
-    colorize purple "Configuring Kharej server" bold
+    echo "Configuring Kharej server"
 
     echo
 
@@ -594,16 +573,14 @@ while true; do
 
         if [[ "$SERVER_ADDR" =~ : ]]; then
             if ! check_ipv6 "$SERVER_ADDR"; then
-                colorize purple "Invalid IPv6 address format. Please try again."
-                continue
+                echo "Invalid IPv6 address format. Please try again."
             fi
         fi
 
         if [[ -n "$SERVER_ADDR" ]]; then
             break
         else
-            colorize purple "Server address cannot be empty. Please enter a valid address."
-            echo
+            echo "Server address cannot be empty. Please enter a valid address."
         fi
     done
 
@@ -622,8 +599,7 @@ while true; do
         if [[ "$tunnel_port" =~ ^[0-9]+$ ]] && [ "$tunnel_port" -gt 22 ] && [ "$tunnel_port" -le 65535 ]; then
             break
         else
-            colorize purple "Please enter a valid port number between 23 and 65535"
-            echo
+            echo "Please enter a valid port number between 23 and 65535"
         fi
     done
 
@@ -636,8 +612,7 @@ while true; do
         read -r transport
 
         if [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; then
-            colorize purple "Invalid transport type. Please choose from tcp, tcpmux, utcpmux, ws, wsmux, uwsmux, udp, tcptun, faketcptun."
-            echo
+            echo "Invalid transport type. Please choose from tcp, tcpmux, utcpmux, ws, wsmux, uwsmux, udp, tcptun, faketcptun."
         fi
     done
 
@@ -662,8 +637,7 @@ while true; do
                 echo
                 break
             else
-                colorize purple "Please enter a valid TUN device name."
-                echo
+                echo "Please enter a valid TUN device name."
             fi
         done
     fi
@@ -698,8 +672,7 @@ while true; do
                 fi
             fi
 
-            colorize purple "Please enter a valid subnet in CIDR notation (e.g., 10.10.10.0/24)."
-            echo
+            echo "Please enter a valid subnet in CIDR notation (e.g., 10.10.10.0/24)."
         done
     fi
 
@@ -725,8 +698,7 @@ while true; do
                 break
             fi
 
-            colorize purple "Please enter a valid MTU value between 576 and 9000."
-            echo
+            echo "Please enter a valid MTU value between 576 and 9000."
         done
     fi
 
@@ -782,8 +754,7 @@ while true; do
 
 
             if [[ "$nodelay" != "true" && "$nodelay" != "false" ]]; then
-                colorize purple "Invalid input. Please enter 'true' or 'false'."
-                echo
+                echo "Invalid input. Please enter 'true' or 'false'."
             fi
         done
     fi
@@ -810,8 +781,7 @@ while true; do
             if [[ "$pool" =~ ^[0-9]+$ ]] && [ "$pool" -gt 1 ] && [ "$pool" -le 1024 ]; then
                 break
             else
-                colorize purple "Please enter a valid connection pool between 1 and 1024."
-                echo
+                echo "Please enter a valid connection pool between 1 and 1024."
             fi
         done
     fi
@@ -837,8 +807,7 @@ while true; do
             if [[ "$mux_version" =~ ^[0-9]+$ ]] && [ "$mux_version" -ge 1 ] && [ "$mux_version" -le 2 ]; then
                 break
             else
-                colorize purple "Please enter a valid mux version: 1 or 2."
-                echo
+                echo "Please enter a valid mux version: 1 or 2."
             fi
         done
     else
@@ -858,8 +827,7 @@ while true; do
         fi
 
         if [[ "$sniffer" != "true" && "$sniffer" != "false" ]]; then
-            colorize purple "Invalid input. Please enter 'true' or 'false'."
-            echo
+            echo "Invalid input. Please enter 'true' or 'false'."
         fi
     done
 
@@ -884,14 +852,12 @@ while true; do
 	        break
 	    elif [[ "$web_port" =~ ^[0-9]+$ ]] && ((web_port >= 23 && web_port <= 65535)); then
 	        if check_port "$web_port" "tcp"; then
-	            colorize purple "Port $web_port is already in use. Please choose a different port."
-	            echo
+	            echo "Port $web_port is already in use. Please choose a different port."
 	        else
 	            break
 	        fi
 	    else
-	        colorize purple "Invalid port. Please enter a number between 22 and 65535, or 0 to disable."
-	        echo
+	        echo "Invalid port. Please enter a number between 22 and 65535, or 0 to disable."
 	    fi
 	done
 
@@ -911,8 +877,7 @@ while true; do
             fi
 
             if [[ "$ip_limit" != "true" && "$ip_limit" != "false" ]]; then
-                colorize purple "Invalid input. Please enter 'true' or 'false'."
-                echo
+                echo "Invalid input. Please enter 'true' or 'false'."
             fi
         done
     else
@@ -973,16 +938,14 @@ EOF
 
     # Enable and start the service
     if systemctl enable --now "${service_dir}/backhaul-kharej${tunnel_port}.service" >/dev/null 2>&1; then
-        colorize indigo "Kharej service with port $tunnel_port enabled to start on boot and started."
-    else
-        colorize purple "Failed to enable service with port $tunnel_port. Please check your system configuration."
-        return 1
+        echo "Kharej service with port $tunnel_port enabled to start on boot and started."
+        echo "Failed to enable service with port $tunnel_port. Please check your system configuration." 1
     fi
 
     echo
     log_action "Created KHAREJ tunnel on port $tunnel_port"
     log_detailed "CREATE" "KHAREJ tunnel created to $SERVER_ADDR:$tunnel_port with transport $transport"
-    colorize indigo "Kharej server configuration completed successfully." bold
+    echo "Kharej server configuration completed successfully."
 }
 
 check_tunnel_status() {
@@ -990,14 +953,14 @@ check_tunnel_status() {
 
 	# Check for .toml files
 	if ! ls "$config_dir"/*.toml 1> /dev/null 2>&1; then
-	    colorize purple "No config files found in the Backhaul directory." bold
+	    echo "No config files found in the Backhaul directory."
 	    echo
 	    press_key
 	    return 1
 	fi
 
 	clear
-    colorize indigo "Checking all services status..." bold
+    echo "Checking all services status..."
     sleep 1
     echo
     for config_path in "$config_dir"/iran*.toml; do
@@ -1011,10 +974,8 @@ check_tunnel_status() {
 			# Check if the Backhaul-client-kharej service is active
 			
 if systemctl is-active --quiet "$service_name"; then
-    colorize indigo "✅ $config_name service with tunnel port $config_port is running"
-else
-    colorize purple "❌ $config_name service with tunnel port $config_port is NOT running"
-fi
+    echo "✅ $config_name service with tunnel port $config_port is running"
+    echo "❌ $config_name service with tunnel port $config_port is NOT running"
 
    		fi
     done
@@ -1030,10 +991,8 @@ fi
 			# Check if the Backhaul-client-kharej service is active
 			
 if systemctl is-active --quiet "$service_name"; then
-    colorize indigo "✅ $config_name service with tunnel port $config_port is running"
-else
-    colorize purple "❌ $config_name service with tunnel port $config_port is NOT running"
-fi
+    echo "✅ $config_name service with tunnel port $config_port is running"
+    echo "❌ $config_name service with tunnel port $config_port is NOT running"
 
    		fi
     done
@@ -1047,14 +1006,14 @@ tunnel_management() {
 	echo
 	# Check for .toml files
 	if ! ls "$config_dir"/*.toml 1> /dev/null 2>&1; then
-	    colorize purple "No config files found in the Backhaul directory." bold
+	    echo "No config files found in the Backhaul directory."
 	    echo
 	    press_key
 	    return 1
 	fi
 
 	clear
-	colorize purple "List of existing services to manage:" bold
+	echo "List of existing services to manage:"
 	echo
 
 	#Variables
@@ -1071,7 +1030,7 @@ tunnel_management() {
             config_port="${config_port%.toml}"
 
             configs+=("$config_path")
-            echo -e "${PURPLE}${index}${NC}) ${INDIGO}Iran${NC} service, Tunnel port: ${INDIGO}$config_port${NC}"
+            echo -e "${index}) Iran service, Tunnel port: $config_port"
             ((index++))
         fi
     done
@@ -1088,7 +1047,7 @@ tunnel_management() {
             config_port="${config_port%.toml}"
 
             configs+=("$config_path")
-            echo -e "${PURPLE}${index}${NC}) ${INDIGO}Kharej${NC} service, Tunnel port: ${INDIGO}$config_port${NC}"
+            echo -e "${index}) Kharej service, Tunnel port: $config_port"
             ((index++))
         fi
     done
@@ -1103,7 +1062,7 @@ tunnel_management() {
 	fi
 	#  validation
 	while ! [[ "$choice" =~ ^[0-9]+$ ]] || (( choice < 0 || choice > ${#configs[@]} )); do
-	    colorize purple "Invalid choice. Please enter a number between 1 and ${#configs[@]}." bold
+	    echo "Invalid choice. Please enter a number between 1 and ${#configs[@]}."
 	    echo
 	    echo -ne "Enter your choice (0 to return): "
 	    read choice
@@ -1117,15 +1076,12 @@ tunnel_management() {
 	service_name="backhaul-${config_name}.service"
 
 	clear
-	colorize purple "List of available commands for $config_name:" bold
+	echo "List of available commands for $config_name:"
 	echo
-colorize purple "─────────────── Available Actions ───────────────" bold
-	colorize indigo "1) 🗑 Remove this tunnel"
-	colorize indigo "2) 🔄 Restart this tunnel"
-	colorize indigo "3) 📜 View service logs"
-	colorize indigo "4) 🔍 View service status"
-	colorize yellow "5) ✏️ Edit tunnel configuration"
-	echo
+echo "─────────────── Available Actions ───────────────"
+	echo "1) 🗑 Remove this tunnel" indigo "2) 🔄 Restart this tunnel"
+	echo "3) 📜 View service logs" indigo "4) 🔍 View service status"
+	echo "5) ✏️ Edit tunnel configuration"
 	read -p "Enter your choice (0 to return): " choice
 
     case $choice in
@@ -1135,7 +1091,7 @@ colorize purple "─────────────── Available Actions
         4) view_service_status "$service_name" ;;
     5) edit_tunnel "$selected_config" ;;
         0) return 1 ;;
-        *) echo -e "${PURPLE}Invalid option!${NC}" && sleep 1 && return 1;;
+        *) echo -e "Invalid option!" && sleep 1 && return 1;;
     esac
 
 }
@@ -1168,12 +1124,12 @@ destroy_tunnel(){
     if systemctl daemon-reload >/dev/null 2>&1 ; then
         echo -e "Systemd daemon reloaded.\n"
     else
-        echo -e "${PURPLE}Failed to reload systemd daemon. Please check your system configuration.${NC}"
+        echo -e "Failed to reload systemd daemon. Please check your system configuration."
     fi
 
     log_action "Tunnel $config_name destroyed"
     log_detailed "DESTROY" "Tunnel $config_name removed and service $service_name disabled"
-    colorize indigo "Tunnel destroyed successfully!" bold
+    echo "Tunnel destroyed successfully!"
     echo
     press_key
 }
@@ -1181,17 +1137,16 @@ destroy_tunnel(){
 restart_service() {
     echo
     service_name="$1"
-    colorize indigo "Restarting $service_name" bold
+    echo "Restarting $service_name"
     echo
 
     # Check if service exists
     if systemctl list-units --type=service | grep -q "$service_name"; then
         systemctl restart "$service_name"
-        colorize indigo "Service restarted successfully" bold
+        echo "Service restarted successfully"
 
     else
-        colorize purple "Cannot restart the service"
-    fi
+        echo "Cannot restart the service"
     echo
     press_key
 }
@@ -1204,9 +1159,9 @@ edit_tunnel() {
         backup_config_file "$config_path"
         nano "$config_path"
         systemctl restart "backhaul-$(basename "${config_path%.toml}").service"
-        colorize indigo "Tunnel restarted after editing." bold
+        echo "Tunnel restarted after editing."
     else
-        colorize purple "Configuration file not found." bold
+        echo "Configuration file not found."
     fi
     echo
     press_key
@@ -1216,7 +1171,7 @@ edit_tunnel() {
 
 show_header() {
     clear
-    echo -e "${INDIGO}"
+    echo -e ""
     echo "╔══════════════════════════════════════════════════╗"
     echo "║            🚀 Backhaul Tunnel Manager           ║"
     echo "╠══════════════════════════════════════════════════╣"
@@ -1226,13 +1181,13 @@ show_header() {
     echo "╚══════════════════════════════════════════════════╝"
     echo -e "📂 Script Path: $(realpath "$0")"
     echo -e "🕒 Executed at: $(date '+%Y-%m-%d %H:%M:%S')"
-    echo -e "${NC}"
+    echo -e ""
 }
 
 main_menu() {
     while true; do
         show_header
-        echo -e "${INDIGO}"
+        echo -e ""
         echo "╔═══════════════════════════════════╗"
         echo "║        Backhaul Main Menu        ║"
         echo "╠══════════════════════════════════╣"
@@ -1244,7 +1199,7 @@ main_menu() {
         echo -e "║ 6) ♻️ Update Script              ║"
         echo -e "║ 0) ❌ Exit                       ║"
         echo "╚══════════════════════════════════╝"
-        echo -e "${NC}"
+        echo -e ""
         echo
         read -rp "Please enter your choice: " choice
 
@@ -1256,7 +1211,7 @@ main_menu() {
             5) web_panel_manager ;;
             6) update_script ;;
             0) exit 0 ;;
-            *) echo -e "\a"; colorize purple "Invalid option. Please try again."; sleep 1 ;;
+            *) echo -e "\a"; echo "Invalid option. Please try again."; sleep 1 ;;
         esac
     done
 }
@@ -1267,13 +1222,11 @@ main_menu() {
 core_manager() {
     while true; do
         show_header
-        colorize indigo "╔═════════════════════╗"
-        colorize indigo "║   ⚙️  Core Manager    ║"
-        colorize indigo "╚═════════════════════╝"
-        echo -e "${YELLOW}1) Install Backhaul Core"
+        echo "╔═════════════════════╗" indigo "║   ⚙️  Core Manager    ║"
+        echo "╚═════════════════════╝" -e "1) Install Backhaul Core"
         echo "2) Update Backhaul Core"
         echo "3) Remove Backhaul Core"
-        echo -e "0) Return to Main Menu${NC}"
+        echo -e "0) Return to Main Menu"
         echo
         read -rp "Enter your choice (or M to return to Main Menu): " core_choice
 
@@ -1286,7 +1239,7 @@ core_manager() {
             2) update_backhaul_core ;;
             3) remove_backhaul_core ;;
             0) return ;;
-            *) colorize purple "Invalid choice. Try again." ;;
+            *) echo "Invalid choice. Try again." ;;
         esac
         echo
         read -rp "Press Enter to continue..." pause
@@ -1299,24 +1252,20 @@ install_backhaul_core() {
     case "$arch" in
         x86_64) arch="amd64" ;;
         aarch64) arch="arm64" ;;
-        *) colorize purple "Unsupported architecture: $arch"; return 1 ;;
+        *) echo "Unsupported architecture: $arch"; return 1 ;;
     esac
 
     url="https://github.com/Musixal/Backhaul/releases/latest/download/backhaul-$arch"
-    colorize indigo "Downloading Backhaul Core from $url"
-    curl -Lo "$config_dir/backhaul" "$url" && chmod +x "$config_dir/backhaul"
+    echo "Downloading Backhaul Core from $url" -Lo "$config_dir/backhaul" "$url" && chmod +x "$config_dir/backhaul"
 
     if [[ -f "$config_dir/backhaul" ]]; then
-        colorize indigo "Backhaul Core installed successfully."
-    else
-        colorize purple "Failed to install Backhaul Core."
-    fi
+        echo "Backhaul Core installed successfully."
+        echo "Failed to install Backhaul Core."
 }
 
 update_backhaul_core() {
     if [[ ! -f "$config_dir/backhaul" ]]; then
-        colorize purple "Backhaul Core not found. Please install it first."
-        return
+        echo "Backhaul Core not found. Please install it first."
     fi
 
     rm -f "$config_dir/backhaul"
@@ -1326,10 +1275,8 @@ update_backhaul_core() {
 remove_backhaul_core() {
     if [[ -f "$config_dir/backhaul" ]]; then
         rm -f "$config_dir/backhaul"
-        colorize indigo "Backhaul Core removed."
-    else
-        colorize purple "Backhaul Core is not installed."
-    fi
+        echo "Backhaul Core removed."
+        echo "Backhaul Core is not installed."
 }
 
 
@@ -1337,18 +1284,16 @@ remove_backhaul_core() {
 
 optimize_system() {
     clear
-    colorize indigo "🚀 Optimizing System for Low Latency & High Performance..." bold
+    echo "🚀 Optimizing System for Low Latency & High Performance..."
     echo
 
     # Enable BBR congestion control
     if grep -q "bbr" /proc/sys/net/ipv4/tcp_congestion_control; then
-        colorize yellow "BBR already enabled."
-    else
+        echo "BBR already enabled."
         echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
         echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
         sysctl -p >/dev/null 2>&1
-        colorize indigo "BBR enabled via sysctl."
-    fi
+        echo "BBR enabled via sysctl."
 
     # Optimize sysctl for networking
     cat <<EOF >> /etc/sysctl.conf
@@ -1372,7 +1317,7 @@ EOF
 * hard nofile 1048576" >> /etc/security/limits.conf
     echo -e "ulimit -n 1048576" >> ~/.bashrc
 
-    colorize indigo "System optimization applied successfully!" bold
+    echo "System optimization applied successfully!"
     echo
     press_key
 }
@@ -1382,7 +1327,7 @@ EOF
 
 update_script() {
     clear
-    colorize indigo "♻️ Updating Backhaul Script..." bold
+    echo "♻️ Updating Backhaul Script..."
     echo
 
     local remote_url="https://raw.githubusercontent.com/iPmartNetwork/Backhaul/master/backhaul.sh"
@@ -1391,19 +1336,17 @@ update_script() {
 
     # Backup current version
     cp "$script_path" "$backup_path"
-    colorize yellow "Backup created at $backup_path"
+    echo "Backup created at $backup_path"
 
     # Try downloading new script
     if curl -fsSL "$remote_url" -o "$script_path"; then
         chmod +x "$script_path"
-        colorize indigo "✅ Script updated successfully from:"
-        echo -e "${YELLOW}$remote_url${NC}"
+        echo "✅ Script updated successfully from:" -e "$remote_url"
         echo
         read -rp "Press Enter to restart the script..." enter
         exec "$script_path"
     else
-        colorize purple "❌ Failed to update script. Reverting to previous version..."
-        mv "$backup_path" "$script_path"
+        echo "❌ Failed to update script. Reverting to previous version..." "$backup_path" "$script_path"
         chmod +x "$script_path"
     fi
     echo
@@ -1416,12 +1359,12 @@ update_script() {
 web_panel_manager() {
     while true; do
         show_header
-        colorize indigo "🌐 Web Panel Manager" bold
+        echo "🌐 Web Panel Manager"
         echo
-        echo -e "${YELLOW}1) Install Web Panel"
+        echo -e "1) Install Web Panel"
         echo "2) Uninstall Web Panel"
         echo "3) Check Panel Status"
-        echo -e "0) Return to Main Menu${NC}"
+        echo -e "0) Return to Main Menu"
         echo
         read -rp "Enter your choice (or M to return to Main Menu): " panel_choice
 
@@ -1434,7 +1377,7 @@ web_panel_manager() {
             2) uninstall_web_panel ;;
             3) check_web_panel ;;
             0) return ;;
-            *) colorize purple "Invalid choice. Try again." ;;
+            *) echo "Invalid choice. Try again." ;;
         esac
         echo
         read -rp "Press Enter to continue..." pause
@@ -1442,7 +1385,7 @@ web_panel_manager() {
 }
 
 install_web_panel() {
-    colorize indigo "Installing Web Panel..." bold
+    echo "Installing Web Panel..."
     apt update -y && apt install -y python3 python3-pip
     pip3 install flask >/dev/null 2>&1
 
@@ -1474,7 +1417,7 @@ EOF
     systemctl daemon-reload
     systemctl enable --now backhaul-panel.service
 
-    colorize indigo "Web Panel installed and started on port 9090." bold
+    echo "Web Panel installed and started on port 9090."
 }
 
 uninstall_web_panel() {
@@ -1482,15 +1425,13 @@ uninstall_web_panel() {
     rm -f /etc/systemd/system/backhaul-panel.service
     rm -rf /opt/backhaul-panel
     systemctl daemon-reload
-    colorize purple "Web Panel has been removed." bold
+    echo "Web Panel has been removed."
 }
 
 check_web_panel() {
     if systemctl is-active --quiet backhaul-panel.service; then
-        colorize indigo "✅ Web Panel is running on port 9090"
-    else
-        colorize purple "❌ Web Panel is not running"
-    fi
+        echo "✅ Web Panel is running on port 9090"
+        echo "❌ Web Panel is not running"
 }
 
 
