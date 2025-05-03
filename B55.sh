@@ -1211,9 +1211,9 @@ main_menu() {
         show_header
         echo -e "${INDIGO}"
         echo "╔═══════════════════════════════════╗"
-        echo "║        Backhaul Main Menu        ║"
+        echo "║        Backhaul Main Menu         ║"
         echo "╠══════════════════════════════════╣"
-        echo -e "║ 1) ⚙️  Core Manager               ║"
+        echo -e "║ 1) ⚙️  Core Manager              ║"
         echo -e "║ 2) 🛠  Configure Tunnel           ║"
         echo -e "║ 3) 🔧 Tunnel Manager             ║"
         echo -e "║ 4) 🚀 Optimize System            ║"
@@ -1245,7 +1245,7 @@ core_manager() {
     while true; do
         show_header
         colorize indigo "╔═════════════════════╗"
-        colorize indigo "║   ⚙️  Core Manager    ║"
+        colorize indigo "║   ⚙️ Core Manager   ║"
         colorize indigo "╚═════════════════════╝"
         echo -e "${YELLOW}1) Install Backhaul Core"
         echo "2) Update Backhaul Core"
