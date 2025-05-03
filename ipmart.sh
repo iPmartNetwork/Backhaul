@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# نصب اسکریپت نهایی backhaul در /usr/bin/backhaul
+DEST="/usr/bin/backhaul"
+SOURCE="/usr/bin/backhaul_tmp"
+
+# بارگذاری فایل اسکریپت
+cat <<'EOF' > "$SOURCE"
+#!/bin/bash
+
 # Define script version
 SCRIPT_VERSION="v0.6.0"
 
@@ -1910,3 +1918,11 @@ core_manager_menu() {
             *) echo -e "${RED}Invalid option!${NC}" && sleep 1 ;;
     done
 }
+
+EOF
+
+chmod +x "$SOURCE"
+mv "$SOURCE" "$DEST"
+
+echo -e "\e[32m✅ Backhaul script installed at /usr/bin/backhaul\e[0m"
+echo -e "\e[33mRun it with: backhaul\e[0m"
