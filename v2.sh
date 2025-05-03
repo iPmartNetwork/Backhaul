@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define script version
-SCRIPT_VERSION="v1.6.2"
+SCRIPT_VERSION="v0.6.0"
 
 # Check if the script is run as root
 if [[ $EUID -ne 0 ]]; then
@@ -195,7 +195,7 @@ EOF
     if [[ -f "${config_dir}/backhaul_premium" ]]; then
     	echo -e "Core Version: ${YELLOW}$($config_dir/backhaul_premium -v)${GREEN}"
     fi
-    echo -e "Telegram Channel: ${YELLOW}@iPmartch${NC}"
+    echo -e "Telegram Channel: ${YELLOW}@iPmartCH${NC}"
 }
 
 # Function to display server location and IP
@@ -1808,7 +1808,7 @@ update_script(){
 # Define the destination path
 DEST_DIR="/usr/bin/"
 BACKHAUL_SCRIPT="backhaul"
-SCRIPT_URL="https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/ipmartnetwork/backhaul/refs/heads/main/backhaul.sh"
 
 echo
 # Check if backhaul.sh exists in /bin/bash
@@ -1853,38 +1853,35 @@ MAGENTA="\e[95m"
 NC='\033[0m' # No Color
 
 # Function to display menu
+# Function to display menu
 display_menu() {
     clear
     display_logo
     display_server_info
     display_backhaul_core_status
-    
     echo
     colorize green " 1. Configure a new tunnel [IPv4/IPv6]" bold
     colorize red " 2. Tunnel management menu" bold
-    colorize cyan " 3. Check tunnels status" bold
- 	echo -e " 4. Optimize network & system limits"
- 	echo -e " 5. Update & Install Backhaul Core"
- 	echo -e " 6. Update & install script"
- 	echo -e " 7. Remove Backhaul Core"
+    colorize yellow " 3. Core Manager" bold
+    colorize cyan " 4. Update & install script" bold
     echo -e " 0. Exit"
     echo
     echo "-------------------------------"
 }
 
 # Function to read user input
+# Function to read user input
 read_option() {
-    read -p "Enter your choice [0-7]: " choice
+    read -p "Enter your choice [0-4]: " choice
     case $choice in
         1) configure_tunnel ;;
         2) tunnel_management ;;
-        3) check_tunnel_status ;;
-        4) hawshemi_script ;;
-        5) download_and_extract_backhaul "menu";;
-        6) update_script ;;
-        7) remove_core ;;
+        3) core_manager_menu ;;
+        4) update_script ;;
         0) exit 0 ;;
         *) echo -e "${RED} Invalid option!${NC}" && sleep 1 ;;
+    esac
+}
     esac
 }
 
@@ -1894,3 +1891,24 @@ do
     display_menu
     read_option
 done
+
+core_manager_menu() {
+    while true; do
+        clear
+        colorize cyan "Core Manager Menu:" bold
+        echo
+        echo -e " 1) Update & Install Backhaul Core"
+        echo -e " 2) Check tunnel status"
+        echo -e " 3) Remove Backhaul Core"
+        echo -e " 0) Return to main menu"
+        echo
+        read -p "Select an option: " core_choice
+        case $core_choice in
+            1) download_and_extract_backhaul "menu" ;;
+            2) check_tunnel_status ;;
+            3) remove_core ;;
+            0) break ;;
+            *) echo -e "${RED}Invalid option!${NC}" && sleep 1 ;;
+        esac
+    done
+}
