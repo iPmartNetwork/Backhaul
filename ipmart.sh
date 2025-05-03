@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# نصب اسکریپت نهایی backhaul در /usr/bin/backhaul
+# install backhaul  /usr/bin/backhaul
 DEST="/usr/bin/backhaul"
 SOURCE="/usr/bin/backhaul_tmp"
 
 # بارگذاری فایل اسکریپت
-cat <<'EOF' > "$SOURCE"
+cat <<EOF > "$SOURCE"
 #!/bin/bash
 
 # Define script version
