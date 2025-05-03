@@ -1525,3 +1525,86 @@ update_script() {
     echo "Not implemented yet."
     sleep 1
 }
+
+install_backhaul_core() {
+    echo "[+] Installing Backhaul Core..."
+    mkdir -p /etc/backhaul
+    curl -fsSL -o /etc/backhaul/backhaul-core https://example.com/backhaul-core
+    chmod +x /etc/backhaul/backhaul-core
+    echo "[✓] Installed at /etc/backhaul/backhaul-core"
+}
+
+update_backhaul_core() {
+    echo "[~] Updating Backhaul Core..."
+    curl -fsSL -o /etc/backhaul/backhaul-core https://example.com/backhaul-core
+    chmod +x /etc/backhaul/backhaul-core
+    echo "[✓] Updated successfully."
+}
+
+remove_backhaul_core() {
+    echo "[x] Removing Backhaul Core..."
+    rm -f /etc/backhaul/backhaul-core
+    echo "[✓] Removed."
+}
+
+iran_server_configuration() {
+    echo "Configuring tunnel for IRAN server..."
+    echo "remote_addr = "KHAREJ_IP"" > /etc/backhaul/tunnel.toml
+    echo "local_addr = "127.0.0.1:1080"" >> /etc/backhaul/tunnel.toml
+    echo "mode = "reverse"" >> /etc/backhaul/tunnel.toml
+    echo "[✓] Config saved at /etc/backhaul/tunnel.toml"
+}
+
+kharej_server_configuration() {
+    echo "Configuring tunnel for KHAREJ server..."
+    echo "remote_addr = "IRAN_IP"" > /etc/backhaul/tunnel.toml
+    echo "local_addr = "0.0.0.0:443"" >> /etc/backhaul/tunnel.toml
+    echo "mode = "listen"" >> /etc/backhaul/tunnel.toml
+    echo "[✓] Config saved at /etc/backhaul/tunnel.toml"
+}
+
+restart_tunnel() {
+    systemctl restart backhaul-tunnel.service
+    echo "[✓] Tunnel restarted."
+}
+
+stop_tunnel() {
+    systemctl stop backhaul-tunnel.service
+    echo "[✓] Tunnel stopped."
+}
+
+view_logs() {
+    journalctl -u backhaul-tunnel.service --no-pager
+}
+
+install_web_panel() {
+    echo "[+] Installing Web Panel..."
+    apt update && apt install -y python3 python3-pip
+    pip3 install flask
+    mkdir -p /opt/backhaul-panel
+    echo 'from flask import Flask; app = Flask(__name__); @app.route("/")
+def home(): return "Backhaul Panel Running"; app.run(host="0.0.0.0", port=8080)' > /opt/backhaul-panel/app.py
+    cat <<EOF > /etc/systemd/system/backhaul-panel.service
+[Unit]
+Description=Backhaul Web Panel
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/backhaul-panel/app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    systemctl daemon-reload
+    systemctl enable --now backhaul-panel.service
+    echo "[✓] Web panel running on port 8080"
+}
+
+remove_web_panel() {
+    echo "[x] Removing Web Panel..."
+    systemctl disable --now backhaul-panel.service
+    rm -rf /opt/backhaul-panel /etc/systemd/system/backhaul-panel.service
+    systemctl daemon-reload
+    echo "[✓] Removed web panel service."
+}
