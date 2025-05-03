@@ -1,3 +1,16 @@
+# ─── Script Info ───────────────────────────────────────────
+script_version="2.1.0"
+script_author="iPmart Network | Ali Hassanzadeh"
+script_date="2025-05-03"
+
+if [[ "$1" == "--version" ]]; then
+    echo "📜 Backhaul Script Version: $script_version"
+    echo "👤 Author: $script_author"
+    echo "🗓  Release Date: $script_date"
+    exit 0
+fi
+# ───────────────────────────────────────────────────────────
+
 configure_tunnel() {
 
 # check if the Backhaul-core installed or not
@@ -1415,3 +1428,6 @@ check_web_panel() {
         colorize purple "❌ Web Panel is not running"
     fi
 }
+
+
+main_menu
