@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Tunnel</title>
+</head>
+<body>
+    <h1>Create New Tunnel</h1>
+    <form action="/create" method="post">
+        <input type="text" name="port" placeholder="Port">
+        <select name="transport">
+            <option value="tcp">TCP</option>
+            <option value="udp">UDP</option>
+        </select>
+        <input type="text" name="port_map" placeholder="Port Mapping">
+        <button type="submit">Create Tunnel</button>
+    </form>
+</body>
+</html>
