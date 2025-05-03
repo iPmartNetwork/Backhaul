@@ -1,15 +1,14 @@
+
 #!/bin/bash
 
 set -e
 
-VERSION="0.1"
+VERSION="0.1.1"
 CONFIG_DIR="/opt/backhaul"
 BIN="$CONFIG_DIR/backhaul"
 SERVICE_DIR="/etc/systemd/system"
 JSON_LOG="/var/log/backhaul_tunnels.json"
-GITHUB_REPO="https://github.com/Musixal/Backhaul/releases/tag/v0.6.5"
 
-# Color setup
 PURPLE='\033[0;35m'
 INDIGO='\033[0;34m'
 YELLOW='\033[1;33m'
@@ -17,28 +16,47 @@ NC='\033[0m' # No Color
 
 mkdir -p "$CONFIG_DIR"
 
-# Detect architecture and download binary
 ARCH=$(uname -m)
+OS=$(uname | tr '[:upper:]' '[:lower:]')
+
 case "$ARCH" in
     x86_64) ARCH_DL="amd64" ;;
     aarch64) ARCH_DL="arm64" ;;
     *) echo -e "${YELLOW}[!] Unsupported architecture: $ARCH${NC}"; exit 1 ;;
 esac
 
-FILE_URL="https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_${ARCH_DL}.tar.gz"
-echo -e "${INDIGO}[i] Downloading Backhaul v0.6.5 for $ARCH_DL...${NC}"
-curl -Lo "/tmp/backhaul_${ARCH_DL}.tar.gz" "$FILE_URL"
-tar -xf "/tmp/backhaul_${ARCH_DL}.tar.gz" -C "$CONFIG_DIR"
+case "$OS" in
+    linux|darwin) PLATFORM="$OS" ;;
+    *) echo -e "${YELLOW}[!] Unsupported operating system: $OS${NC}"; exit 1 ;;
+esac
+
+FILE="backhaul_${PLATFORM}_${ARCH_DL}.tar.gz"
+FILE_URL="https://github.com/Musixal/Backhaul/releases/download/v0.6.5/$FILE"
+CHECKSUM_URL="$FILE_URL.sha256"
+
+echo -e "${INDIGO}[i] Downloading Backhaul v0.6.5 for ${PLATFORM}/${ARCH_DL}...${NC}"
+curl -fLo "/tmp/$FILE" "$FILE_URL" || {
+  echo -e "${YELLOW}[!] Download failed. Falling back to linux_amd64...${NC}"
+  curl -fLo "/tmp/backhaul_linux_amd64.tar.gz" "https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_amd64.tar.gz"
+  tar -xf "/tmp/backhaul_linux_amd64.tar.gz" -C "$CONFIG_DIR"
+}
+
+if curl -fsSL "$CHECKSUM_URL" -o "/tmp/$FILE.sha256"; then
+  echo "$(cat /tmp/$FILE.sha256)  /tmp/$FILE" | sha256sum -c -
+else
+  echo -e "${YELLOW}[!] SHA256 file not found. Continuing with caution...${NC}"
+fi
+
+tar -xf "/tmp/$FILE" -C "$CONFIG_DIR"
 chmod +x "$BIN"
 
 echo -e "${PURPLE}=== Backhaul Tunnel Setup v${VERSION} ===${NC}"
-
 read -rp "Tunnel name: " TUNNEL_NAME
 read -rp "IRAN server IP or domain: " SERVER_IP
 read -rp "Tunnel port (e.g. 443): " PORT
 read -rp "Authentication token: " TOKEN
 
-echo -e "${YELLOW}Select transport:${NC}"
+echo -e "${YELLOW}Select transport type:${NC}"
 echo -e "${INDIGO}1) tcp\n2) udp\n3) ws\n4) wss\n5) faketcptun\n6) icmp${NC}"
 read -rp "Option [1-6]: " TRANSPORT
 
@@ -52,11 +70,11 @@ case $TRANSPORT in
     *) echo -e "${YELLOW}[!] Invalid option${NC}"; exit 1 ;;
 esac
 
-EDGE_LINE="#edge_ip = \"\""
+EDGE_LINE="#edge_ip = """
 if [[ "$TRANSPORT_TYPE" =~ ^(ws|wss)$ ]]; then
     read -rp "Edge IP or domain (optional): " EDGE
     if [[ -n "$EDGE" ]]; then
-        EDGE_LINE="edge_ip = \"$EDGE\""
+        EDGE_LINE="edge_ip = "$EDGE""
     fi
 fi
 
@@ -139,4 +157,6 @@ cat <<EOF > "$JSON_LOG"
 }
 EOF
 
-echo -e "${PURPLE}✔ Tunnel '$TUNNEL_NAME' is $STATUS. Configuration saved to:${NC} ${YELLOW}$JSON_LOG${NC}"
+echo -e "${PURPLE}✔ Tunnel '$TUNNEL_NAME' is $STATUS. Configuration saved at:${NC} ${YELLOW}$JSON_LOG${NC}"
+echo -e "${INDIGO}[i] To edit the config file use: nano $CONFIG_FILE, then restart with:${NC}"
+echo -e "${YELLOW}systemctl restart $SERVICE_NAME${NC}"
