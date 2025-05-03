@@ -1882,7 +1882,7 @@ read_option() {
         *) echo -e "${RED} Invalid option!${NC}" && sleep 1 ;;
     esac
 }
-}
+
 
 # Main script
 while true
