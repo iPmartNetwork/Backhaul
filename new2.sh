@@ -133,15 +133,18 @@ download_and_extract_backhaul() {
     # Check architecture
     ARCH=$(uname -m)
     case "$ARCH" in
-    x86_64)
+        x86_64)
             DOWNLOAD_URL="https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul_amd64.tar.gz"
-    arm64|aarch64)
+            ;;
+        arm64|aarch64)
             DOWNLOAD_URL="https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul_arm64.tar.gz"
-    *)
+            ;;
+        *)
             echo -e "${RED}Unsupported architecture: $ARCH.${NC}"
             sleep 1
             exit 1
-esac
+            ;;
+    esac
 
     if [ -z "$DOWNLOAD_URL" ]; then
         echo -e "${RED}Failed to retrieve download URL.${NC}"
