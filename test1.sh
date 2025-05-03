@@ -33,10 +33,8 @@ manage_core() {
 }
 
 configure_tunnel_ipv46() {
-    clear
-    echo -e "${MAGENTA}Multi-server IPv4/IPv6 Tunnel Configuration${RESET}"
-
-    validate_ip4() { [[ "$1" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; }
+# Tunnel logic could not be extracted.
+}
     validate_ip6() { [[ "$1" =~ ^([0-9a-fA-F]{0,1,4}:){1,7}[0-9a-fA-F]{0,1,4}$ ]]; }
     validate_port() { [[ "$1" -ge 1 && "$1" -le 65535 ]]; }
 
