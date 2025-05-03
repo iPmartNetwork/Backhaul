@@ -550,340 +550,24 @@ EOF
 }
 
 kharej_server_configuration() {
-    load_last_settings
-    clear
-    colorize purple "Configuring Kharej server" bold
-
-    echo
-
-    # Prompt for IRAN server IP address
-
-
-
-while true; do
-        echo -ne "[*] IRAN server IP address [IPv4/IPv6]: "
-        read -r SERVER_ADDR
-
-        if [[ "$SERVER_ADDR" =~ : ]]; then
-            if ! check_ipv6 "$SERVER_ADDR"; then
-                colorize purple "Invalid IPv6 address format. Please try again."
-                continue
-            fi
-        fi
-
-        if [[ -n "$SERVER_ADDR" ]]; then
-            break
-        else
-            colorize purple "Server address cannot be empty. Please enter a valid address."
-            echo
-        fi
-    done
-
-    echo
-
-    # Read the tunnel port
-
-
-
-while true; do
-        echo -ne "[*] Tunnel port: "
-        read -r tunnel_port
-
-        if [[ "$tunnel_port" =~ ^[0-9]+$ ]] && [ "$tunnel_port" -gt 22 ] && [ "$tunnel_port" -le 65535 ]; then
-            break
-        else
-            colorize purple "Please enter a valid port number between 23 and 65535"
-            echo
-        fi
-    done
-
-    echo
-
-    # Initialize transport variable
-    local transport=""
-    while [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; do
-        echo -ne "[*] Transport type (tcp/tcpmux/utcpmux/ws/wsmux/uwsmux/udp/tcptun/faketcptun): "
-        read -r transport
-
-        if [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; then
-            colorize purple "Invalid transport type. Please choose from tcp, tcpmux, utcpmux, ws, wsmux, uwsmux, udp, tcptun, faketcptun."
-            echo
-        fi
-    done
-
-    # TUN Device Name
-    local tun_name="backhaul"
-    if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
-        echo
-
-
-
-while true; do
-            echo -ne "[-] TUN Device Name (default backhaul): "
-            read -r tun_name
-
-            if [[ -z "$tun_name" ]]; then
-                tun_name="backhaul"
-            fi
-
-            if [[ "$tun_name" =~ ^[a-zA-Z0-9]+$ ]]; then
-                echo
-                break
-            else
-                colorize purple "Please enter a valid TUN device name."
-                echo
-            fi
-        done
-    fi
-
-    # TUN Subnet
-    local tun_subnet="10.10.10.0/24"
-    if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
-
-
-
-while true; do
-            echo -ne "[-] TUN Subnet (default 10.10.10.0/24): "
-            read -r tun_subnet
-
-            # Set default value if input is empty
-            if [[ -z "$tun_subnet" ]]; then
-                tun_subnet="10.10.10.0/24"
-            fi
-
-            # Validate TUN subnet (CIDR notation)
-            if [[ "$tun_subnet" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]{1,2}$ ]]; then
-                # Validate IP and subnet mask
-                IFS='/' read -r ip subnet <<< "$tun_subnet"
-                if [[ "$subnet" -le 32 && "$subnet" -ge 1 ]]; then
-                    IFS='.' read -r a b c d <<< "$ip"
-                    if [[ "$a" -le 255 && "$b" -le 255 && "$c" -le 255 && "$d" -le 255 ]]; then
-                        echo
-                        break
-                    fi
-                fi
-            fi
-
-            colorize purple "Please enter a valid subnet in CIDR notation (e.g., 10.10.10.0/24)."
-            echo
-        done
-    fi
-
-    # TUN MTU
-    local mtu="1500"
-    if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
-
-
-
-while true; do
-            echo -ne "[-] TUN MTU (default 1500): "
-            read -r mtu
-
-            # Set default value if input is empty
-            if [[ -z "$mtu" ]]; then
-                mtu=1500
-            fi
-
-            # Validate MTU value
-            if [[ "$mtu" =~ ^[0-9]+$ ]] && [ "$mtu" -ge 576 ] && [ "$mtu" -le 9000 ]; then
-                break
-            fi
-
-            colorize purple "Please enter a valid MTU value between 576 and 9000."
-            echo
-        done
-    fi
-
-
-    # Edge IP
-    if [[ "$transport" =~ ^(ws|wsmux|uwsmux)$ ]]; then
-
-
-
-while true; do
-            echo
-            echo -ne "[-] Edge IP/Domain (optional)(press enter to disable): "
-            read -r edge_ip
-
-            # Set default if input is empty
-            if [[ -z "$edge_ip" ]]; then
-                edge_ip="#edge_ip = \"188.114.96.0\""
-                break
-            fi
-
-            # format the edge_ip variable
-            edge_ip="edge_ip = \"$edge_ip\""
-            break
-        done
-    else
-        edge_ip="#edge_ip = \"188.114.96.0\""
-    fi
-
-    echo
-
-    # Security Token
-    echo -ne "[-] Security Token (press enter to use default value): "
-    read -r token
-    token="${token:-your_token}"
-
-    # Enable TCP_NODELAY
-    local nodelay=""
-
-    # Check transport type
-    if [[ "$transport" == "udp" ]]; then
-        nodelay=false
-    else
-        echo
-        while [[ "$nodelay" != "true" && "$nodelay" != "false" ]]; do
-            echo -ne "[-] Enable TCP_NODELAY (true/false)(default true): "
-            read -r nodelay
-
-            if [[ -z "$nodelay" ]]; then
-                nodelay=true
-            fi
-
-
-            if [[ "$nodelay" != "true" && "$nodelay" != "false" ]]; then
-                colorize purple "Invalid input. Please enter 'true' or 'false'."
-                echo
-            fi
-        done
-    fi
-
-
-    # Connection Pool
-    local pool=8
-    if [[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; then
-    	echo
-
-
-
-while true; do
-            echo -ne "[-] Connection Pool (default 8): "
-            read -r pool
-
-            if [[ -z "$pool" ]]; then
-                pool=8
-            fi
-
-
-            if [[ "$pool" =~ ^[0-9]+$ ]] && [ "$pool" -gt 1 ] && [ "$pool" -le 1024 ]; then
-                break
-            else
-                colorize purple "Please enter a valid connection pool between 1 and 1024."
-                echo
-            fi
-        done
-    fi
-
-    # Mux Version
-    if [[ "$transport" =~ ^(tcpmux|wsmux|utcpmux|uwsmux)$ ]]; then
-
-
-
-while true; do
-            echo
-            echo -ne "[-] Mux Version (1 or 2) (default 2): "
-            read -r mux_version
-
-            # Set default to 1 if input is empty
-            if [[ -z "$mux_version" ]]; then
-                mux_version=2
-            fi
-
-            # Validate the input for version 1 or 2
-            if [[ "$mux_version" =~ ^[0-9]+$ ]] && [ "$mux_version" -ge 1 ] && [ "$mux_version" -le 2 ]; then
-                break
-            else
-                colorize purple "Please enter a valid mux version: 1 or 2."
-                echo
-            fi
-        done
-    else
-        mux_version=2
-    fi
-
-    echo
-
-	# Enable Sniffer
-    local sniffer=""
-    while [[ "$sniffer" != "true" && "$sniffer" != "false" ]]; do
-        echo -ne "[-] Enable Sniffer (true/false)(default false): "
-        read -r sniffer
-
-        if [[ -z "$sniffer" ]]; then
-            sniffer=false
-        fi
-
-        if [[ "$sniffer" != "true" && "$sniffer" != "false" ]]; then
-            colorize purple "Invalid input. Please enter 'true' or 'false'."
-            echo
-        fi
-    done
-
-	echo
-
-    # Get Web Port
-	local web_port=""
-
-
-
-while true; do
-	    echo -ne "[-] Enter Web Port (default 0 to disable): "
-	    read -r web_port
-
-        if [[ -z "$web_port" ]]; then
-            web_port=0
-        fi
-
-	    if [[ "$web_port" == "0" ]]; then
-	        break
-	    elif [[ "$web_port" =~ ^[0-9]+$ ]] && ((web_port >= 23 && web_port <= 65535)); then
-	        if check_port "$web_port" "tcp"; then
-	            colorize purple "Port $web_port is already in use. Please choose a different port."
-	            echo
-	        else
-	            break
-	        fi
-	    else
-	        colorize purple "Invalid port. Please enter a number between 22 and 65535, or 0 to disable."
-	        echo
-	    fi
-	done
-
-
-
-    # IP Limit
-    if [[ ! "$transport" =~ ^(ws|udp|tcptun|faketcptun)$ ]]; then
-        # Enable IP Limit
-        local ip_limit=""
-        while [[ "$ip_limit" != "true" && "$ip_limit" != "false" ]]; do
-            echo
-            echo -ne "[-] Enable IP Limit for X-UI Panel (true/false)(default false): "
-            read -r ip_limit
-
-            if [[ -z "$ip_limit" ]]; then
-                ip_limit=false
-            fi
-
-            if [[ "$ip_limit" != "true" && "$ip_limit" != "false" ]]; then
-                colorize purple "Invalid input. Please enter 'true' or 'false'."
-                echo
-            fi
-        done
-    else
-	    # Automatically set proxy_protocol to false for ws and udp
-	    ip_limit="false"
-	fi
-
-    # Generate client configuration file
-    save_last_settings
-    backup_config_file "${config_dir}/kharej${tunnel_port}.toml"
-    cat << EOF > "${config_dir}/kharej${tunnel_port}.toml"
-[client]
-check_connection "$SERVER_ADDR" "$tunnel_port"
-    remote_addr = "${SERVER_ADDR}:${tunnel_port}"
-${edge_ip}
+    echo "[+] Configuring Backhaul for KHAREJ server..."
+
+    read -rp "Enter local listen port (e.g. 443): " listen_port
+    read -rp "Enter remote IRAN IP: " iran_ip
+    read -rp "Enter token for client authentication: " token
+
+    cat <<EOF > /etc/backhaul/tunnel.toml
+[server]
+listen = "0.0.0.0:$listen_port"
+token = "$token"
+
+[client_map]
+[client_map.iran]
+address = "$iran_ip:1080"
+EOF
+
+    echo "[✓] KHAREJ server tunnel configuration saved at /etc/backhaul/tunnel.toml"
+}
 transport = "${transport}"
 token = "${token}"
 connection_pool = ${pool}
@@ -1566,11 +1250,23 @@ iran_server_configuration() {
 }
 
 kharej_server_configuration() {
-    echo "Configuring tunnel for KHAREJ server..."
-    echo "remote_addr = "IRAN_IP"" > /etc/backhaul/tunnel.toml
-    echo "local_addr = "0.0.0.0:443"" >> /etc/backhaul/tunnel.toml
-    echo "mode = "listen"" >> /etc/backhaul/tunnel.toml
-    echo "[✓] Config saved at /etc/backhaul/tunnel.toml"
+    echo "[+] Configuring Backhaul for KHAREJ server..."
+
+    read -rp "Enter local listen port (e.g. 443): " listen_port
+    read -rp "Enter remote IRAN IP: " iran_ip
+    read -rp "Enter token for client authentication: " token
+
+    cat <<EOF > /etc/backhaul/tunnel.toml
+[server]
+listen = "0.0.0.0:$listen_port"
+token = "$token"
+
+[client_map]
+[client_map.iran]
+address = "$iran_ip:1080"
+EOF
+
+    echo "[✓] KHAREJ server tunnel configuration saved at /etc/backhaul/tunnel.toml"
 }
 
 restart_tunnel() {
