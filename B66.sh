@@ -1406,9 +1406,6 @@ check_web_panel() {
 }
 
 
-main_menu
-
-
 ##############################################
 # Main Menu & Submenu Definitions (Rewritten)
 ##############################################
@@ -1605,3 +1602,5 @@ remove_web_panel() {
     systemctl daemon-reload
     echo "[✓] Removed web panel service."
 }
+
+main_menu
