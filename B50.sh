@@ -1188,22 +1188,24 @@ show_header() {
 main_menu() {
     while true; do
         show_header
-        
+        echo -e "${INDIGO}"
         echo "╔═══════════════════════════════════╗"
         echo "║        Backhaul Main Menu        ║"
         echo "╠══════════════════════════════════╣"
-        echo -e "║ 1) ⚙️  Core Manager               ║"
-        echo -e "║ 2) 🛠  Configure Tunnel           ║"
-        echo -e "║ 3) 🔧 Tunnel Manager             ║"
-        echo -e "║ 4) 🚀 Optimize System            ║"
-        echo -e "║ 5) 🌐 Web Panel Manager          ║"
-        echo -e "║ 6) ♻️ Update Script              ║"
-        echo -e "║ 0) ❌ Exit                       ║"
+        echo "║ 1) ⚙️  Core Manager               ║"
+        echo "║ 2) 🛠  Configure Tunnel           ║"
+        echo "║ 3) 🔧 Tunnel Manager             ║"
+        echo "║ 4) 🚀 Optimize System            ║"
+        echo "║ 5) 🌐 Web Panel Manager          ║"
+        echo "║ 6) ♻️ Update Script              ║"
+        echo "║ 0) ❌ Exit                       ║"
         echo "╚══════════════════════════════════╝"
-        
+        echo -e "${NC}"
         echo
         read -rp "Please enter your choice: " choice
-[[ "$choice" =~ ^[Mm]$ ]] && returncase "$choice" in
+        [[ "$choice" =~ ^[Mm]$ ]] && return
+
+        case "$choice" in
             1) core_manager ;;
             2) configure_tunnel ;;
             3) tunnel_management ;;
@@ -1211,7 +1213,7 @@ main_menu() {
             5) web_panel_manager ;;
             6) update_script ;;
             0) exit 0 ;;
-            *) echo -e "\a"; colorize purple "Invalid option. Please try again."; sleep 1 ;;
+            *) echo "Invalid option. Try again."; sleep 1 ;;
         esac
     done
 }
