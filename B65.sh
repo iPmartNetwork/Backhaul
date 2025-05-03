@@ -1335,25 +1335,22 @@ update_script() {
 
 web_panel_manager() {
     while true; do
-        show_header
-        colorize indigo "🌐 Web Panel Manager" bold
-        echo
-        echo -e "${YELLOW}1) Install Web Panel"
-        echo "2) Uninstall Web Panel"
-        echo "3) Check Panel Status"
-        echo -e "0) Return to Main Menu${NC}"
-        echo
-        read -rp "Enter your choice (or M to return to Main Menu): " panel_choice
-[[ "$panel_choice" =~ ^[Mm]$ ]] && returncase "$panel_choice" in
+        clear
+        echo "╔═══════════════════════╗"
+        echo "║   🌐 Web Panel Menu    ║"
+        echo "╚═══════════════════════╝"
+        echo "1) Install Web Panel"
+        echo "2) Remove Web Panel"
+        echo "M) Return to Main Menu"
+        read -rp "Enter your choice: " wp_choice
+        [[ "$wp_choice" =~ ^[Mm]$ ]] && return
+        case "$wp_choice" in
             1) install_web_panel ;;
-            2) uninstall_web_panel ;;
-            3) check_web_panel ;;
-            0) return ;;
-            *) colorize purple "Invalid choice. Try again." ;;
+            2) remove_web_panel ;;
+            *) echo "Invalid option. Try again."; sleep 1 ;;
         esac
-        echo
         read -rp "Press Enter to continue..." pause
-[[ "$pause" =~ ^[Mm]$ ]] && returndone
+    done
 }
 
 install_web_panel() {
