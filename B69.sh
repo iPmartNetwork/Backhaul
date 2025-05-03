@@ -549,25 +549,7 @@ EOF
     colorize indigo "IRAN server configuration completed successfully." bold
 }
 
-kharej_server_configuration() {
-    echo "[+] Configuring Backhaul for KHAREJ server..."
 
-    read -rp "Enter local listen port (e.g. 443): " listen_port
-    read -rp "Enter remote IRAN IP: " iran_ip
-    read -rp "Enter token for client authentication: " token
-
-    cat <<EOF > /etc/backhaul/tunnel.toml
-[server]
-listen = "0.0.0.0:$listen_port"
-token = "$token"
-
-[client_map]
-[client_map.iran]
-address = "$iran_ip:1080"
-EOF
-
-    echo "[✓] KHAREJ server tunnel configuration saved at /etc/backhaul/tunnel.toml"
-}
 transport = "${transport}"
 token = "${token}"
 connection_pool = ${pool}
@@ -1249,25 +1231,7 @@ iran_server_configuration() {
     echo "[✓] Config saved at /etc/backhaul/tunnel.toml"
 }
 
-kharej_server_configuration() {
-    echo "[+] Configuring Backhaul for KHAREJ server..."
 
-    read -rp "Enter local listen port (e.g. 443): " listen_port
-    read -rp "Enter remote IRAN IP: " iran_ip
-    read -rp "Enter token for client authentication: " token
-
-    cat <<EOF > /etc/backhaul/tunnel.toml
-[server]
-listen = "0.0.0.0:$listen_port"
-token = "$token"
-
-[client_map]
-[client_map.iran]
-address = "$iran_ip:1080"
-EOF
-
-    echo "[✓] KHAREJ server tunnel configuration saved at /etc/backhaul/tunnel.toml"
-}
 
 restart_tunnel() {
     systemctl restart backhaul-tunnel.service
@@ -1316,3 +1280,25 @@ remove_web_panel() {
 }
 
 main_menu
+
+
+kharej_server_configuration() {
+kharej_server_configuration() {
+    echo "[+] Configuring Backhaul for KHAREJ server..."
+
+    read -rp "Enter local listen port (e.g. 443): " listen_port
+    read -rp "Enter remote IRAN IP: " iran_ip
+    read -rp "Enter token for client authentication: " token
+
+    cat <<EOF > /etc/backhaul/tunnel.toml
+[server]
+listen = "0.0.0.0:$listen_port"
+token = "$token"
+
+[client_map]
+[client_map.iran]
+address = "$iran_ip:1080"
+EOF
+
+    echo "[✓] KHAREJ server tunnel configuration saved at /etc/backhaul/tunnel.toml"
+}
