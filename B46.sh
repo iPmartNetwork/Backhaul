@@ -3,6 +3,27 @@ script_version="2.1.0"
 script_author="iPmart Network | Ali Hassanzadeh"
 script_date="2025-05-03"
 
+
+colorize() {
+    local color="$1"
+    local text="$2"
+    local style="$3"
+
+    case "$color" in
+        purple) code="\e[38;5;135m" ;;   # Purple
+        indigo) code="\e[38;5;44m"  ;;   # Turquoise
+        yellow) code="\e[38;5;226m" ;;   # Yellow
+        reset)  code="\e[0m" ;;
+        *) code="\e[0m" ;;
+    esac
+
+    [[ "$style" == "bold" ]] && code="\e[1m$code"
+    echo -e "${code}${text}\e[0m"
+}
+
+${text}\e[0m"
+}
+
 if [[ "$1" == "--version" ]]; then
     echo "📜 Backhaul Script Version: $script_version"
     echo "👤 Author: $script_author"
