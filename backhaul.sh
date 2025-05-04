@@ -168,10 +168,30 @@ function start_web_interface() {
 # 13. Task Scheduling
 function schedule_task() {
     echo -e "${CYAN}Scheduling Task...${NC}"
-    read -p "Enter command to schedule: " command
-    read -p "Enter schedule (e.g., '0 2 * * *' for daily at 2 AM): " schedule
-    (crontab -l; echo "$schedule $command") | crontab -
-    echo -e "${GREEN}Task scheduled.${NC}"
+    while true; do
+        read -p "Enter command to schedule: " command
+        if [[ -z "$command" ]]; then
+            echo -e "${RED}Command cannot be empty. Please enter a valid command.${NC}"
+        else
+            break
+        fi
+    done
+
+    while true; do
+        read -p "Enter schedule (e.g., '0 2 * * *' for daily at 2 AM): " schedule
+        if [[ "$schedule" =~ ^([0-9\*\/,-]+\s){4}[0-9\*\/,-]+$ ]]; then
+            break
+        else
+            echo -e "${RED}Invalid schedule format. Please use valid cron syntax.${NC}"
+        fi
+    done
+
+    (crontab -l 2>/dev/null; echo "$schedule $command") | crontab -
+    if [[ $? -eq 0 ]]; then
+        echo -e "${GREEN}Task scheduled successfully.${NC}"
+    else
+        echo -e "${RED}Failed to schedule the task. Please check your input.${NC}"
+    fi
 }
 
 # 14. Support for New Protocols
