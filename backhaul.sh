@@ -150,6 +150,9 @@ download_and_extract_backhaul() {
         exit 1
     fi
 
+    # Ensure the config directory exists
+    mkdir -p "$config_dir"
+
     DOWNLOAD_DIR=$(mktemp -d)
     echo -e "Downloading Backhaul from $DOWNLOAD_URL...\n"
     sleep 1
