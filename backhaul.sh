@@ -1831,3 +1831,12 @@ read_option() {
         4) core_manager_menu ;;
         5) web_panel ;;
         0) exit 0 ;;
+        *) echo -e "${RED} Invalid option!${NC}" && sleep 1 ;;
+    esac
+}
+
+# Main script loop
+while true; do
+    display_menu
+    read_option
+done
