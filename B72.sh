@@ -174,7 +174,7 @@ ________________________________________________________________________________
 -------/____/---_--_----__---)__--_/_---/-| -/-----__--_/_-----------__---)__---/-__-
   /   /        / /  ) /   ) /   ) /    /  | /    /___) /   | /| /  /   ) /   ) /(    
 _/___/________/_/__/_(___(_/_____(_ __/___|/____(___ _(_ __|/_|/__(___/_/_____/___\__
-                                                                                     
+____________________________________________________________________________________                                                                                     
 
              Lightning-fast reverse tunneling solution
 EOF
@@ -1409,7 +1409,7 @@ update_script(){
 # Define the destination path
 DEST_DIR="/usr/bin/"
 BACKHAUL_SCRIPT="backhaul"
-SCRIPT_URL="https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/iPmartNetwork/Backhaul/refs/heads/master/backhaul.sh"
 
 echo
 # Check if backhaul.sh exists in /bin/bash
@@ -1510,6 +1510,23 @@ stop_web_panel() {
 install_web_panel() {
     local dashboard_dir="/var/www/backhaul-dashboard"
     local service_file="/etc/systemd/system/backhaul-web-panel.service"
+    local port=22490
+
+    # Prompt user for custom port
+    echo -ne "Enter the port for the web panel (default is 22490): "
+    read -r input_port
+    if [[ "$input_port" =~ ^[0-9]+$ ]] && [ "$input_port" -ge 1024 ] && [ "$input_port" -le 65535 ]; then
+        port="$input_port"
+    else
+        echo "Using default port: $port"
+    fi
+
+    # Prompt user for custom directory
+    echo -ne "Enter the directory for the web panel files (default is /var/www/backhaul-dashboard): "
+    read -r input_dir
+    if [[ -n "$input_dir" ]]; then
+        dashboard_dir="$input_dir"
+    fi
 
     # Create the dashboard directory
     mkdir -p "$dashboard_dir"
@@ -1543,7 +1560,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 -m http.server 8080 --directory $dashboard_dir
+ExecStart=/usr/bin/python3 -m http.server $port --directory $dashboard_dir
 Restart=always
 RestartSec=3
 
@@ -1555,7 +1572,26 @@ EOF
     systemctl daemon-reload
     systemctl enable --now backhaul-web-panel.service
 
-    echo "Web panel installed and started. Access it at http://<your-server-ip>:8080"
+    echo "Web panel installed and started. Access it at http://<your-server-ip>:$port"
+}
+
+# Function to manage the web panel service
+manage_web_panel() {
+    echo -e "\n\e[1;36mWeb Panel Management Options:\e[0m"
+    echo -e " \e[1;32m[1]\e[0m Start Web Panel"
+    echo -e " \e[1;31m[2]\e[0m Stop Web Panel"
+    echo -e " \e[1;33m[3]\e[0m Restart Web Panel"
+    echo -e " \e[1;34m[4]\e[0m View Web Panel Status"
+    echo -e " \e[1;31m[0]\e[0m Back to Main Menu"
+    read -p "Enter your choice [0-4]: " panel_choice
+    case $panel_choice in
+        1) systemctl start backhaul-web-panel.service && echo "Web panel started." ;;
+        2) systemctl stop backhaul-web-panel.service && echo "Web panel stopped." ;;
+        3) systemctl restart backhaul-web-panel.service && echo "Web panel restarted." ;;
+        4) systemctl status backhaul-web-panel.service ;;
+        0) return ;;
+        *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
+    esac
 }
 
 # Color codes
@@ -1619,13 +1655,17 @@ read_option() {
             echo -e "\n\e[1;36mWeb Panel Manager Options:\e[0m"
             echo -e " \e[1;32m[1]\e[0m Start Web Panel"
             echo -e " \e[1;31m[2]\e[0m Stop Web Panel"
-            echo -e " \e[1;31m[3]\e[0m Install Web Panel"
+            echo -e " \e[1;33m[3]\e[0m Restart Web Panel"
+            echo -e " \e[1;34m[4]\e[0m View Web Panel Status"
+            echo -e " \e[1;31m[5]\e[0m Install Web Panel"
             echo -e " \e[1;31m[0]\e[0m Back to Main Menu"
-            read -p "Enter your choice [0-3]: " panel_choice
+            read -p "Enter your choice [0-5]: " panel_choice
             case $panel_choice in
                 1) start_web_panel ;;
                 2) stop_web_panel ;;
-                3) install_web_panel ;;
+                3) systemctl restart backhaul-web-panel.service && echo "Web panel restarted." ;;
+                4) systemctl status backhaul-web-panel.service ;;
+                5) install_web_panel ;;
                 0) return ;;
                 *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
             esac
