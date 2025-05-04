@@ -262,11 +262,13 @@ fi
     echo
     colorize turquoise "1) Configure for IRAN server" bold
     colorize turquoise "2) Configure for KHAREJ server" bold
+    colorize red "0) Back to Main Menu" bold
     echo
     read -p "Enter your choice: " configure_choice
     case "$configure_choice" in
         1) iran_server_configuration ;;
         2) kharej_server_configuration ;;
+        0) return ;;
         *) echo -e "${RED}Invalid option!${NC}" && sleep 1 ;;
     esac
     echo
@@ -1242,11 +1244,15 @@ tunnel_management() {
     done
     
     echo
-	echo -ne "Enter your choice (0 to return): "
+    colorize cyan "Additional options:" bold
+    colorize yellow "R) Restore a backup" bold
+    colorize red "0) Back to Main Menu" bold
+    echo
+    echo -ne "Enter your choice (0 to return): "
     read choice 
 	
 	# Check if the user chose to return
-	if (( choice == 0 )); then
+	if [[ "$choice" == "0" ]]; then
 	    return
 	fi
 	#  validation
@@ -1255,7 +1261,7 @@ tunnel_management() {
 	    echo
 	    echo -ne "Enter your choice (0 to return): "
 	    read choice
-		if (( choice == 0 )); then
+		if [[ "$choice" == "0" ]]; then
 			return
 		fi
 	done
@@ -1270,7 +1276,8 @@ tunnel_management() {
 	colorize red "1) Remove this tunnel"
 	colorize yellow "2) Restart this tunnel"
 	colorize reset "3) View service logs"
-    colorize reset "4) View service status"
+	colorize reset "4) View service status"
+	colorize red "0) Back to Main Menu" bold
 	echo 
 	read -p "Enter your choice (0 to return): " choice
 	
@@ -1279,7 +1286,7 @@ tunnel_management() {
         2) restart_service "$service_name" ;;
         3) view_service_logs "$service_name" ;;
         4) view_service_status "$service_name" ;;
-        0) return 1 ;;
+        0) return ;;
         *) echo -e "${RED}Invalid option!${NC}" && sleep 1 && return 1;;
     esac
 	
