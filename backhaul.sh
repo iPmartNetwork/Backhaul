@@ -43,17 +43,6 @@ function display_backhaul_core_status() {
 }
 
 function display_menu() {
-    if [[ -z "$MENU_UNLOCKED" ]]; then
-        echo -ne "${WHITE}Enter menu password: ${NC}"
-        read -s password
-        echo
-        if [[ "$password" != "admin123" ]]; then
-            echo -e "${RED}Access denied.${NC}"
-            sleep 1
-            exit 1
-        fi
-        export MENU_UNLOCKED=true
-    fi
     clear
     display_server_info
     display_backhaul_core_status
@@ -299,3 +288,4 @@ while true; do
         *) echo -e "${RED}Invalid option.${NC}"; sleep 1 ;;
     esac
 done
+
