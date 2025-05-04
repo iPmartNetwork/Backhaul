@@ -1109,59 +1109,86 @@ remove_core(){
 # Function for checking tunnel status
 check_tunnel_status() {
     echo
-    
-	# Check for .toml files
-	if ! ls "$config_dir"/*.toml 1> /dev/null 2>&1; then
-	    colorize red "No config files found in the Backhaul directory." bold
-	    echo 
-	    press_key
-	    return 1
-	fi
 
-	clear
+    # Check for .toml files
+    if ! ls "$config_dir"/*.toml 1> /dev/null 2>&1; then
+        colorize red "No config files found in the Backhaul directory." bold
+        echo
+        press_key
+        return 1
+    fi
+
+    clear
     colorize yellow "Checking all services status..." bold
     sleep 1
     echo
-    for config_path in "$config_dir"/iran*.toml; do
+    for config_path in "$config_dir"/iran*.toml "$config_dir"/kharej*.toml; do
         if [ -f "$config_path" ]; then
             # Extract config_name without directory path and change it to service name
-			config_name=$(basename "$config_path")
-			config_name="${config_name%.toml}"
-			service_name="backhaul-${config_name}.service"
-            config_port="${config_name#iran}"
-            
-			# Check if the Backhaul-client-kharej service is active
-			if systemctl is-active --quiet "$service_name"; then
-				colorize green "Iran service with tunnel port $config_port is running"
-			else
-				colorize red "Iran service with tunnel port $config_port is not running"
-			fi
-   		fi
+            config_name=$(basename "$config_path")
+            config_name="${config_name%.toml}"
+            service_name="backhaul-${config_name}.service"
+
+            # Check and fix the service
+            check_and_fix_tunnel_service "$service_name" "$config_path"
+        fi
     done
-    
-    for config_path in "$config_dir"/kharej*.toml; do
-        if [ -f "$config_path" ]; then
-            # Extract config_name without directory path and change it to service name
-			config_name=$(basename "$config_path")
-			config_name="${config_name%.toml}"
-			service_name="backhaul-${config_name}.service"
-            config_port="${config_name#kharej}"
-            
-			# Check if the Backhaul-client-kharej service is active
-			if systemctl is-active --quiet "$service_name"; then
-				colorize green "Kharej service with tunnel port $config_port is running"
-			else
-				colorize red "Kharej service with tunnel port $config_port is not running"
-			fi
-   		fi
-    done
-    
-    
+
     echo
     press_key
 }
 
+# Function to check and fix tunnel service issues
+check_and_fix_tunnel_service() {
+    local service_name="$1"
+    local config_path="$2"
 
+    # Check if the service exists
+    if ! systemctl list-units --type=service | grep -q "$service_name"; then
+        colorize red "Service $service_name does not exist. Attempting to recreate it..." bold
+
+        # Recreate the service file
+        local tunnel_port=$(basename "$config_path" | sed -E 's/(iran|kharej)([0-9]+)\.toml/\2/')
+        local service_type=$(basename "$config_path" | sed -E 's/(iran|kharej)[0-9]+\.toml/\1/')
+        cat << EOF > "/etc/systemd/system/$service_name"
+[Unit]
+Description=Backhaul $service_type Port $tunnel_port ($service_type)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=${config_dir}/backhaul -c $config_path
+Restart=always
+RestartSec=3
+User=backhaul
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE CAP_NET_RAW
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+        # Reload systemd and enable the service
+        systemctl daemon-reload
+        systemctl enable --now "$service_name"
+    fi
+
+    # Check if the service is running
+    if ! systemctl is-active --quiet "$service_name"; then
+        colorize red "Service $service_name is not running. Attempting to restart it..." bold
+        systemctl restart "$service_name"
+
+        # Check again after restart
+        if systemctl is-active --quiet "$service_name"; then
+            colorize green "Service $service_name restarted successfully." bold
+        else
+            colorize red "Failed to restart service $service_name. Please check the logs." bold
+            journalctl -u "$service_name" --no-pager | tail -n 20
+        fi
+    else
+        colorize green "Service $service_name is running." bold
+    fi
+}
 
 # Function for destroying tunnel
 tunnel_management() {
