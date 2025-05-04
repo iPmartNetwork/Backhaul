@@ -567,20 +567,6 @@ iran_server_configuration() {
 	    
         if [[ -z "$web_port" ]]; then
             web_port=0
-            echo
-        fi
-    done
-	
-	echo 
-	
-	# Get Web Port
-	local web_port=""
-	while true; do
-	    echo -ne "[-] Enter Web Port (default 0 to disable): "
-	    read -r web_port
-	    
-        if [[ -z "$web_port" ]]; then
-            web_port=0
         fi
 	    if [[ "$web_port" == "0" ]]; then
 	        break
