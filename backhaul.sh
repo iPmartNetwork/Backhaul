@@ -1660,22 +1660,26 @@ read_option() {
         6) update_script ;;
         7) 
             echo -e "\n\e[1;36mWeb Panel Manager Options:\e[0m"
-            echo -e " \e[1;32m[1]\e[0m Start Web Panel"
-            echo -e " \e[1;31m[2]\e[0m Stop Web Panel"
-            echo -e " \e[1;33m[3]\e[0m Restart Web Panel"
-            echo -e " \e[1;34m[4]\e[0m View Web Panel Status"
-            echo -e " \e[1;31m[5]\e[0m Install Web Panel"
-            echo -e " \e[1;31m[0]\e[0m Back to Main Menu"
-            read -p "Enter your choice [0-5]: " panel_choice
-            case $panel_choice in
-                1) start_web_panel ;;
-                2) stop_web_panel ;;
-                3) systemctl restart backhaul-web-panel.service && echo "Web panel restarted." ;;
-                4) systemctl status backhaul-web-panel.service ;;
-                5) install_web_panel ;;
-                0) return ;;
-                *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
-            esac
+            echo -ne "Enter Web Port (default 0 to disable): "
+            read -r web_port
+
+            # Set default to 0 if input is empty
+            if [[ -z "$web_port" ]]; then
+                web_port=0
+            fi
+
+            # Validate the port
+            if [[ "$web_port" == "0" ]]; then
+                break
+            elif [[ "$web_port" =~ ^[0-9]+$ ]] && ((web_port >= 23 && web_port <= 65535)); then
+                if check_port "$web_port" "tcp"; then
+                    colorize red "Port $web_port is already in use. Please choose a different port."
+                else
+                    break
+                fi
+            else
+                colorize red "Invalid port. Please enter a number between 23 and 65535, or 0 to disable."
+            fi
             ;;
         0) exit 0 ;;
         *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
