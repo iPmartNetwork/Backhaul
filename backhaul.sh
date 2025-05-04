@@ -665,20 +665,8 @@ iran_server_configuration() {
 	echo
 
     if [[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; then
-        # Display port format options
-        colorize green "[*] Supported Port Formats:" bold
-        echo "1. 443-600                  - Listen on all ports in the range 443 to 600."
-        echo "2. 443-600:5201             - Listen on all ports in the range 443 to 600 and forward traffic to 5201."
-        echo "3. 443-600=1.1.1.1:5201     - Listen on all ports in the range 443 to 600 and forward traffic to 1.1.1.1:5201."
-        echo "4. 443                      - Listen on local port 443 and forward to remote port 443 (default forwarding)."
-        echo "5. 4000=5000                - Listen on local port 4000 (bind to all local IPs) and forward to remote port 5000."
-        echo "6. 127.0.0.2:443=5201       - Bind to specific local IP (127.0.0.2), listen on port 443, and forward to remote port 5201."
-        echo "7. 443=1.1.1.1:5201         - Listen on local port 443 and forward to a specific remote IP (1.1.1.1) on port 5201."
-        #echo "8. 127.0.0.2:443=1.1.1.1:5201 - Bind to specific local IP (127.0.0.2), listen on port 443, and forward to remote IP (1.1.1.1) on port 5201."
-        echo ""
-        
-        # Prompt user for input
-        echo -ne "[*] Enter your ports in the specified formats (separated by commas): "
+        echo
+        echo -ne "[*] Enter your ports (comma-separated): "
         read -r input_ports
         input_ports=$(echo "$input_ports" | tr -d ' ')
         IFS=',' read -r -a ports <<< "$input_ports"
@@ -714,34 +702,7 @@ EOF
 
 	# Validate and process port mappings
 	for port in "${ports[@]}"; do
-	    if [[ "$port" =~ ^[0-9]+-[0-9]+$ ]]; then
-	        # Range of ports (e.g., 443-600)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^[0-9]+-[0-9]+:[0-9]+$ ]]; then
-	        # Port range with forwarding to a specific port (e.g., 443-600:5201)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^[0-9]+-[0-9]+=([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):[0-9]+$ ]]; then
-	        # Port range forwarding to a specific remote IP and port (e.g., 443-600=1.1.1.1:5201)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^[0-9]+$ ]]; then
-	        # Single port forwarding (e.g., 443)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^[0-9]+=[0-9]+$ ]]; then
-	        # Single port with forwarding to another port (e.g., 4000=5000)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):[0-9]+=[0-9]+$ ]]; then
-	        # Specific local IP with port forwarding (e.g., 127.0.0.2:443=5201)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^[0-9]+=[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$ ]]; then
-	        # Single port with forwarding to a specific remote IP and port (e.g., 443=1.1.1.1:5201)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):[0-9]+=[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$ ]]; then
-	        # Specific local IP with forwarding to a specific remote IP and port (e.g., 127.0.0.2:443=1.1.1.1:5201)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    else
-	        colorize red "[ERROR] Invalid port mapping: $port. Skipping."
-	        echo
-	    fi
+	    echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
 	done
 	
 	echo "]" >> "${config_dir}/iran${tunnel_port}.toml"
@@ -1506,6 +1467,69 @@ restore_backup() {
     colorize green "Backup restored: $original_file" bold
 }
 
+# Function to handle core manager menu
+core_manager_menu() {
+    clear
+    colorize cyan "Core Manager Menu" bold
+    echo
+    colorize cyan " 1. Install Backhaul Core" bold
+    colorize cyan " 2. Update Backhaul Core" bold
+    colorize cyan " 3. Remove Backhaul Core" bold
+    colorize red " 0. Back to Main Menu" bold
+    echo
+    echo "-------------------------------"
+    read -p "Enter your choice [0-3]: " core_choice
+    case $core_choice in
+        1) install_core ;;
+        2) update_core ;;
+        3) remove_core ;;
+        0) return ;;
+        *) echo -e "${RED} Invalid option!${NC}" && sleep 1 ;;
+    esac
+}
+
+# Function to install Backhaul Core
+install_core() {
+    clear
+    colorize cyan "Installing Backhaul Core..." bold
+    echo
+    download_and_extract_backhaul
+    if [[ -f "${config_dir}/backhaul_premium" ]]; then
+        colorize green "Backhaul Core installed successfully." bold
+    else
+        colorize red "Failed to install Backhaul Core. Please check the logs." bold
+    fi
+    press_key
+}
+
+# Function to update Backhaul Core
+update_core() {
+    clear
+    colorize cyan "Updating Backhaul Core..." bold
+    echo
+    download_and_extract_backhaul "menu"
+    if [[ -f "${config_dir}/backhaul_premium" ]]; then
+        colorize green "Backhaul Core updated successfully." bold
+    else
+        colorize red "Failed to update Backhaul Core. Please check the logs." bold
+    fi
+    press_key
+}
+
+# Function to remove Backhaul Core
+remove_core() {
+    clear
+    colorize cyan "Removing Backhaul Core..." bold
+    echo
+    if [[ -d "$config_dir" ]]; then
+        rm -rf "$config_dir"
+        colorize green "Backhaul Core removed successfully." bold
+    else
+        colorize red "Backhaul Core is not installed." bold
+    fi
+    press_key
+}
+
 # Color codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -1532,7 +1556,7 @@ display_menu() {
     colorize cyan " 1. Configure a new tunnel [IPv4/IPv6]" bold
     colorize cyan " 2. Tunnel management menu" bold
     colorize cyan " 3. Check tunnels status" bold
-    colorize cyan " 4. Core Manager" bold
+    colorize cyan " 4. Core Manager" bold  # Added Core Manager option
     colorize cyan " 5. Web Panel" bold
     colorize red " 0. Exit" bold
     echo
