@@ -94,14 +94,14 @@ config_dir="/root/backhaul-core"
 # Function to download and extract Backhaul Core
 download_and_extract_backhaul() {
     if [[ "$1" == "menu" ]]; then
-        rm -rf "${config_dir}/backhaul_premium" >/dev/null 2>&1
+        rm -rf "${config_dir}/backhaul" >/dev/null 2>&1
         echo
         colorize turquoise "Restart all services after updating to new core" bold
         sleep 2
     fi
     
     # Check if Backhaul Core is already installed
-    if [[ -f "${config_dir}/backhaul_premium" ]]; then
+    if [[ -f "${config_dir}/backhaul" ]]; then
         return 1
     fi
 
@@ -116,10 +116,10 @@ download_and_extract_backhaul() {
     ARCH=$(uname -m)
     case "$ARCH" in
         x86_64)
-            DOWNLOAD_URL="https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul_amd64.tar.gz"
+            DOWNLOAD_URL="https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_amd64.tar.gz"
             ;;
         arm64|aarch64)
-            DOWNLOAD_URL="https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul_arm64.tar.gz"
+            DOWNLOAD_URL="https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_arm64.tar.gz"
             ;;
         *)
             echo -e "${RED}Unsupported architecture: $ARCH.${NC}"
@@ -147,7 +147,7 @@ download_and_extract_backhaul() {
     mkdir -p "$config_dir"
     tar -xzf "$DOWNLOAD_DIR/backhaul.tar.gz" -C "$config_dir"
     echo -e "${GREEN}Backhaul installation completed.${NC}\n"
-    chmod u+x "${config_dir}/backhaul_premium"
+    chmod u+x "${config_dir}/backhaul"
     rm -rf "$DOWNLOAD_DIR"
     rm -rf "${config_dir}/LICENSE" >/dev/null 2>&1
     rm -rf "${config_dir}/README.md" >/dev/null 2>&1
@@ -189,8 +189,8 @@ ________________________________________________________________________________
 EOF
     echo -e "\033[0m\033[36m"  # Updated to turquoise
     echo -e "Script Version: \033[36m${SCRIPT_VERSION}\033[36m"  # Updated to turquoise
-    if [[ -f "${config_dir}/backhaul_premium" ]]; then
-    	echo -e "Core Version: \033[36m$($config_dir/backhaul_premium -v)\033[36m"  # Updated to turquoise
+    if [[ -f "${config_dir}/backhaul" ]]; then
+    	echo -e "Core Version: \033[36m$($config_dir/backhaul -v)\033[36m"  # Updated to turquoise
     fi
     echo -e "Telegram Channel: \033[36m@iPmartch\033[0m"  # Updated to turquoise
 }
@@ -206,7 +206,7 @@ display_server_info() {
 
 # Function to display Backhaul Core installation status
 display_backhaul_core_status() {
-    if [[ -f "${config_dir}/backhaul_premium" ]]; then
+    if [[ -f "${config_dir}/backhaul" ]]; then
         echo -e "\033[36mBackhaul Core:\033[0m \033[36mInstalled\033[0m"  # Updated to turquoise
     else
         echo -e "\033[36mBackhaul Core:\033[0m \033[36mNot installed\033[0m"  # Updated to turquoise
@@ -706,7 +706,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=${config_dir}/backhaul_premium -c ${config_dir}/iran${tunnel_port}.toml
+ExecStart=${config_dir}/backhaul -c ${config_dir}/iran${tunnel_port}.toml
 Restart=always
 RestartSec=3
 
@@ -1060,7 +1060,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=${config_dir}/backhaul_premium -c ${config_dir}/kharej${tunnel_port}.toml
+ExecStart=${config_dir}/backhaul -c ${config_dir}/kharej${tunnel_port}.toml
 Restart=always
 RestartSec=3
 
@@ -1360,10 +1360,10 @@ check_core_version() {
     # Read the version from the downloaded file (assumes the version is stored on the first line)
     local file_version=$(head -n 1 "$tmp_file")
 
-    # Get the version from the backhaul_premium binary using the -v flag
-    local backhaul_version=$($config_dir/backhaul_premium -v)
+    # Get the version from the backhaul binary using the -v flag
+    local backhaul_version=$($config_dir/backhaul -v)
 
-    # Compare the file version with the version from backhaul_premium
+    # Compare the file version with the version from backhaul
     if [ "$file_version" != "$backhaul_version" ]; then
         colorize cyan "New Core version available: $backhaul_version => $file_version" bold
     fi
@@ -1388,7 +1388,7 @@ check_script_version() {
     # Read the version from the downloaded file (assumes the version is stored on the first line)
     local file_version=$(head -n 1 "$tmp_file")
 
-    # Compare the file version with the version from backhaul_premium
+    # Compare the file version with the version from backhaul
     if [ "$file_version" != "$SCRIPT_VERSION" ]; then
         colorize cyan "New script version available: $SCRIPT_VERSION => $file_version" bold
     fi
@@ -1690,12 +1690,12 @@ handle_advanced_options() {
                 ;;
             3) 
                 echo -e "\n\e[1;36mChecking Core Version...\e[0m"
-                check_core_version "https://raw.githubusercontent.com/wafflenoodle/zenith-stash/main/core_version.txt"
+                check_core_version "https://raw.githubusercontent.com/Musixal/Backhaul/releases/main/core_version.txt"
                 press_key
                 ;;
             4) 
                 echo -e "\n\e[1;36mChecking Script Version...\e[0m"
-                check_script_version "https://raw.githubusercontent.com/wafflenoodle/zenith-stash/main/script_version.txt"
+                check_script_version "https://raw.githubusercontent.com/iPmartnetwork/Backhaul/maaster/script_version.txt"
                 press_key
                 ;;
             0) 
