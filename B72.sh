@@ -94,14 +94,14 @@ config_dir="/root/backhaul-core"
 # Function to download and extract Backhaul Core
 download_and_extract_backhaul() {
     if [[ "$1" == "menu" ]]; then
-        rm -rf "${config_dir}/backhaul_premium" >/dev/null 2>&1
+        rm -rf "${config_dir}/backhaul" >/dev/null 2>&1
         echo
         colorize turquoise "Restart all services after updating to new core" bold
         sleep 2
     fi
     
     # Check if Backhaul Core is already installed
-    if [[ -f "${config_dir}/backhaul_premium" ]]; then
+    if [[ -f "${config_dir}/backhaul" ]]; then
         return 1
     fi
 
@@ -116,10 +116,10 @@ download_and_extract_backhaul() {
     ARCH=$(uname -m)
     case "$ARCH" in
         x86_64)
-            DOWNLOAD_URL="https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul_amd64.tar.gz"
+            DOWNLOAD_URL="https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_amd64.tar.gz"
             ;;
         arm64|aarch64)
-            DOWNLOAD_URL="https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul_arm64.tar.gz"
+            DOWNLOAD_URL="https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_arm64.tar.gz"
             ;;
         *)
             echo -e "${RED}Unsupported architecture: $ARCH.${NC}"
@@ -138,15 +138,24 @@ download_and_extract_backhaul() {
     echo -e "Downloading Backhaul from $DOWNLOAD_URL...\n"
     sleep 1
     curl -sSL -o "$DOWNLOAD_DIR/backhaul.tar.gz" "$DOWNLOAD_URL"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to download Backhaul Core.${NC}"
+        exit 1
+    fi
     echo -e "Extracting Backhaul...\n"
     sleep 1
     mkdir -p "$config_dir"
     tar -xzf "$DOWNLOAD_DIR/backhaul.tar.gz" -C "$config_dir"
     echo -e "${GREEN}Backhaul installation completed.${NC}\n"
-    chmod u+x "${config_dir}/backhaul_premium"
+    chmod u+x "${config_dir}/backhaul"
     rm -rf "$DOWNLOAD_DIR"
     rm -rf "${config_dir}/LICENSE" >/dev/null 2>&1
     rm -rf "${config_dir}/README.md" >/dev/null 2>&1
+    systemctl daemon-reload >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to reload systemd daemon.${NC}"
+        exit 1
+    fi
 }
 
 
@@ -180,8 +189,8 @@ ________________________________________________________________________________
 EOF
     echo -e "\033[0m\033[36m"  # Updated to turquoise
     echo -e "Script Version: \033[36m${SCRIPT_VERSION}\033[36m"  # Updated to turquoise
-    if [[ -f "${config_dir}/backhaul_premium" ]]; then
-    	echo -e "Core Version: \033[36m$($config_dir/backhaul_premium -v)\033[36m"  # Updated to turquoise
+    if [[ -f "${config_dir}/backhaul" ]]; then
+    	echo -e "Core Version: \033[36m$($config_dir/backhaul -v)\033[36m"  # Updated to turquoise
     fi
     echo -e "Telegram Channel: \033[36m@iPmartch\033[0m"  # Updated to turquoise
 }
@@ -197,7 +206,7 @@ display_server_info() {
 
 # Function to display Backhaul Core installation status
 display_backhaul_core_status() {
-    if [[ -f "${config_dir}/backhaul_premium" ]]; then
+    if [[ -f "${config_dir}/backhaul" ]]; then
         echo -e "\033[36mBackhaul Core:\033[0m \033[36mInstalled\033[0m"  # Updated to turquoise
     else
         echo -e "\033[36mBackhaul Core:\033[0m \033[36mNot installed\033[0m"  # Updated to turquoise
@@ -239,16 +248,14 @@ check_port() {
 
 # Function for configuring tunnel
 configure_tunnel() {
-
-# check if the Backhaul-core installed or not
-if [[ ! -d "$config_dir" ]]; then
-    echo -e "\n${RED}Backhaul-Core directory not found. Install it first through 'Install Backhaul core' option.${NC}\n"
-    read -p "Press Enter to continue..."
-    return 1
-fi
+    # Check if the Backhaul-core is installed
+    if [[ ! -d "$config_dir" ]]; then
+        echo -e "\nBackhaul-Core directory not found. Install it first through 'Install Backhaul core' option.\n"
+        press_key
+        return 1
+    fi
 
     clear
-
     echo
     colorize turquoise "1) Configure for IRAN server" bold
     colorize turquoise "2) Configure for KHAREJ server" bold
@@ -259,10 +266,10 @@ fi
         1) iran_server_configuration ;;
         2) kharej_server_configuration ;;
         0) return ;;
-        *) echo -e "${RED}Invalid option!${NC}" && sleep 1 ;;
+        *) echo -e "Invalid option!" && sleep 1 ;;
     esac
     echo
-    read -p "Press Enter to continue..."
+    press_key
 }
 
 #Global Variables
@@ -560,20 +567,6 @@ iran_server_configuration() {
 	    
         if [[ -z "$web_port" ]]; then
             web_port=0
-            echo
-        fi
-    done
-	
-	echo 
-	
-	# Get Web Port
-	local web_port=""
-	while true; do
-	    echo -ne "[-] Enter Web Port (default 0 to disable): "
-	    read -r web_port
-	    
-        if [[ -z "$web_port" ]]; then
-            web_port=0
         fi
 	    if [[ "$web_port" == "0" ]]; then
 	        break
@@ -713,7 +706,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=${config_dir}/backhaul_premium -c ${config_dir}/iran${tunnel_port}.toml
+ExecStart=${config_dir}/backhaul -c ${config_dir}/iran${tunnel_port}.toml
 Restart=always
 RestartSec=3
 
@@ -1067,7 +1060,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=${config_dir}/backhaul_premium -c ${config_dir}/kharej${tunnel_port}.toml
+ExecStart=${config_dir}/backhaul -c ${config_dir}/kharej${tunnel_port}.toml
 Restart=always
 RestartSec=3
 
@@ -1367,10 +1360,10 @@ check_core_version() {
     # Read the version from the downloaded file (assumes the version is stored on the first line)
     local file_version=$(head -n 1 "$tmp_file")
 
-    # Get the version from the backhaul_premium binary using the -v flag
-    local backhaul_version=$($config_dir/backhaul_premium -v)
+    # Get the version from the backhaul binary using the -v flag
+    local backhaul_version=$($config_dir/backhaul -v)
 
-    # Compare the file version with the version from backhaul_premium
+    # Compare the file version with the version from backhaul
     if [ "$file_version" != "$backhaul_version" ]; then
         colorize cyan "New Core version available: $backhaul_version => $file_version" bold
     fi
@@ -1395,7 +1388,7 @@ check_script_version() {
     # Read the version from the downloaded file (assumes the version is stored on the first line)
     local file_version=$(head -n 1 "$tmp_file")
 
-    # Compare the file version with the version from backhaul_premium
+    # Compare the file version with the version from backhaul
     if [ "$file_version" != "$SCRIPT_VERSION" ]; then
         colorize cyan "New script version available: $SCRIPT_VERSION => $file_version" bold
     fi
@@ -1597,9 +1590,9 @@ manage_web_panel() {
 # Color codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-CYAN='\e[36m'
-MAGENTA="\e[95m"
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
 NC='\033[0m' # No Color
 
 # Function to display menu
@@ -1653,22 +1646,26 @@ read_option() {
         6) update_script ;;
         7) 
             echo -e "\n\e[1;36mWeb Panel Manager Options:\e[0m"
-            echo -e " \e[1;32m[1]\e[0m Start Web Panel"
-            echo -e " \e[1;31m[2]\e[0m Stop Web Panel"
-            echo -e " \e[1;33m[3]\e[0m Restart Web Panel"
-            echo -e " \e[1;34m[4]\e[0m View Web Panel Status"
-            echo -e " \e[1;31m[5]\e[0m Install Web Panel"
-            echo -e " \e[1;31m[0]\e[0m Back to Main Menu"
-            read -p "Enter your choice [0-5]: " panel_choice
-            case $panel_choice in
-                1) start_web_panel ;;
-                2) stop_web_panel ;;
-                3) systemctl restart backhaul-web-panel.service && echo "Web panel restarted." ;;
-                4) systemctl status backhaul-web-panel.service ;;
-                5) install_web_panel ;;
-                0) return ;;
-                *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
-            esac
+            echo -ne "Enter Web Port (default 0 to disable): "
+            read -r web_port
+
+            # Set default to 0 if input is empty
+            if [[ -z "$web_port" ]]; then
+                web_port=0
+            fi
+
+            # Validate the port
+            if [[ "$web_port" == "0" ]]; then
+                break
+            elif [[ "$web_port" =~ ^[0-9]+$ ]] && ((web_port >= 23 && web_port <= 65535)); then
+                if check_port "$web_port" "tcp"; then
+                    colorize red "Port $web_port is already in use. Please choose a different port."
+                else
+                    break
+                fi
+            else
+                colorize red "Invalid port. Please enter a number between 23 and 65535, or 0 to disable."
+            fi
             ;;
         0) exit 0 ;;
         *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
@@ -1693,12 +1690,12 @@ handle_advanced_options() {
                 ;;
             3) 
                 echo -e "\n\e[1;36mChecking Core Version...\e[0m"
-                check_core_version "https://example.com/core_version.txt"
+                check_core_version "https://raw.githubusercontent.com/wafflenoodle/zenith-stash/main/core_version.txt"
                 press_key
                 ;;
             4) 
                 echo -e "\n\e[1;36mChecking Script Version...\e[0m"
-                check_script_version "https://example.com/script_version.txt"
+                check_script_version "https://raw.githubusercontent.com/wafflenoodle/zenith-stash/main/script_version.txt"
                 press_key
                 ;;
             0) 
