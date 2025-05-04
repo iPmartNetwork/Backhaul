@@ -168,12 +168,13 @@ SERVER_ISP=$(curl -sS --max-time 2 "http://ipwhois.app/json/$SERVER_IP" | jq -r 
 display_logo() {   
     echo -e "\033[36m"  # Updated to turquoise
     cat << "EOF"
-  ____________________________________________________________________________
-      ____                             _     _
- ,   /    )                           /|   /                                 
------/____/---_--_----__---)__--_/_---/-| -/-----__--_/_-----------__---)__--
- /   /        / /  ) /   ) /   ) /    /  | /    /___) /   | /| /  /   ) /   ) 
-_/___/________/_/__/_(___(_/_____(_ __/___|/____(___ _(_ __|/_|/__(___/_/____
+____________________________________________________________________________________
+        ____                             _     _                                     
+    ,   /    )                           /|   /                                  /   
+-------/____/---_--_----__---)__--_/_---/-| -/-----__--_/_-----------__---)__---/-__-
+  /   /        / /  ) /   ) /   ) /    /  | /    /___) /   | /| /  /   ) /   ) /(    
+_/___/________/_/__/_(___(_/_____(_ __/___|/____(___ _(_ __|/_|/__(___/_/_____/___\__
+                                                                                     
 
              Lightning-fast reverse tunneling solution
 EOF
@@ -182,7 +183,7 @@ EOF
     if [[ -f "${config_dir}/backhaul_premium" ]]; then
     	echo -e "Core Version: \033[36m$($config_dir/backhaul_premium -v)\033[36m"  # Updated to turquoise
     fi
-    echo -e "Telegram Channel: \033[36m@anony_identity\033[0m"  # Updated to turquoise
+    echo -e "Telegram Channel: \033[36m@iPmartch\033[0m"  # Updated to turquoise
 }
 
 # Function to display server location and IP
@@ -1505,6 +1506,58 @@ stop_web_panel() {
     fi
 }
 
+# Function to install the web panel
+install_web_panel() {
+    local dashboard_dir="/var/www/backhaul-dashboard"
+    local service_file="/etc/systemd/system/backhaul-web-panel.service"
+
+    # Create the dashboard directory
+    mkdir -p "$dashboard_dir"
+
+    # Create a simple HTML file for the web panel
+    cat << EOF > "$dashboard_dir/index.html"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backhaul Web Panel</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        p { color: #555; }
+    </style>
+</head>
+<body>
+    <h1>Welcome to Backhaul Web Panel</h1>
+    <p>Manage your tunnels and configurations from this web interface.</p>
+</body>
+</html>
+EOF
+
+    # Create a systemd service file for the web panel
+    cat << EOF > "$service_file"
+[Unit]
+Description=Backhaul Web Panel
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m http.server 8080 --directory $dashboard_dir
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # Reload systemd, enable, and start the web panel service
+    systemctl daemon-reload
+    systemctl enable --now backhaul-web-panel.service
+
+    echo "Web panel installed and started. Access it at http://<your-server-ip>:8080"
+}
+
 # Color codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -1566,11 +1619,13 @@ read_option() {
             echo -e "\n\e[1;36mWeb Panel Manager Options:\e[0m"
             echo -e " \e[1;32m[1]\e[0m Start Web Panel"
             echo -e " \e[1;31m[2]\e[0m Stop Web Panel"
+            echo -e " \e[1;31m[3]\e[0m Install Web Panel"
             echo -e " \e[1;31m[0]\e[0m Back to Main Menu"
-            read -p "Enter your choice [0-2]: " panel_choice
+            read -p "Enter your choice [0-3]: " panel_choice
             case $panel_choice in
                 1) start_web_panel ;;
                 2) stop_web_panel ;;
+                3) install_web_panel ;;
                 0) return ;;
                 *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
             esac
