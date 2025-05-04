@@ -9,7 +9,6 @@ if [[ $EUID -ne 0 ]]; then
    sleep 1
    exit 1
 fi
-fi
 
 # just press key to continue
 press_key(){
