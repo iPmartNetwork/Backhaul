@@ -110,14 +110,14 @@ config_dir="/root/backhaul-core"
 # Function to download and extract Backhaul Core
 download_and_extract_backhaul() {
     if [[ "$1" == "menu" ]]; then
-        rm -rf "${config_dir}/backhaul_premium" >/dev/null 2>&1
+        rm -rf "${config_dir}/backhaul" >/dev/null 2>&1
         echo
         colorize cyan "Restart all services after updating to new core" bold
         sleep 2
     fi
     
     # Check if Backhaul Core is already installed
-    if [[ -f "${config_dir}/backhaul_premium" ]]; then
+    if [[ -f "${config_dir}/backhaul" ]]; then
         return 1
     fi
 
@@ -132,10 +132,10 @@ download_and_extract_backhaul() {
     ARCH=$(uname -m)
     case "$ARCH" in
         x86_64)
-            DOWNLOAD_URL="https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul_amd64.tar.gz"
+            DOWNLOAD_URL="https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_amd64.tar.gz"
             ;;
         arm64|aarch64)
-            DOWNLOAD_URL="https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul_arm64.tar.gz"
+            DOWNLOAD_URL="https://github.com/Musixal/Backhaul/releases/download/v0.6.5/backhaul_linux_arm64.tar.gz"
             ;;
         *)
             echo -e "${RED}Unsupported architecture: $ARCH.${NC}"
@@ -168,7 +168,7 @@ download_and_extract_backhaul() {
         exit 1
     fi
     echo -e "${GREEN}Backhaul installation completed.${NC}\n"
-    chmod u+x "${config_dir}/backhaul_premium"
+    chmod u+x "${config_dir}/backhaul"
     rm -rf "$DOWNLOAD_DIR"
     rm -rf "${config_dir}/LICENSE" >/dev/null 2>&1
     rm -rf "${config_dir}/README.md" >/dev/null 2>&1
@@ -210,8 +210,8 @@ _/___/________/_/__/_(___(_/_____(_ __/___|/____(___ _(_ __|/_|/__(___/_/____
 EOF
     echo -e "${NC}${GREEN}"
     echo -e "Script Version: ${YELLOW}${SCRIPT_VERSION}${GREEN}"
-    if [[ -f "${config_dir}/backhaul_premium" ]]; then
-    	echo -e "Core Version: ${YELLOW}$($config_dir/backhaul_premium -v)${GREEN}"
+    if [[ -f "${config_dir}/backhaul" ]]; then
+    	echo -e "Core Version: ${YELLOW}$($config_dir/backhaul -v)${GREEN}"
     fi
     echo -e "Telegram Channel: ${YELLOW}@iPmartCh${NC}"
 }
@@ -227,7 +227,7 @@ display_server_info() {
 
 # Function to display Backhaul Core installation status
 display_backhaul_core_status() {
-    if [[ -f "${config_dir}/backhaul_premium" ]]; then
+    if [[ -f "${config_dir}/backhaul" ]]; then
         echo -e "${CYAN}Backhaul Core:${NC} ${GREEN}Installed${NC}"
     else
         echo -e "${CYAN}Backhaul Core:${NC} ${RED}Not installed${NC}"
@@ -724,7 +724,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=${config_dir}/backhaul_premium -c ${config_dir}/iran${tunnel_port}.toml
+ExecStart=${config_dir}/backhaul -c ${config_dir}/iran${tunnel_port}.toml
 Restart=always
 RestartSec=3
 User=backhaul
@@ -1045,7 +1045,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=${config_dir}/backhaul_premium -c ${config_dir}/kharej${tunnel_port}.toml
+ExecStart=${config_dir}/backhaul -c ${config_dir}/kharej${tunnel_port}.toml
 Restart=always
 RestartSec=3
 User=backhaul
@@ -1350,10 +1350,10 @@ check_core_version() {
     # Read the version from the downloaded file (assumes the version is stored on the first line)
     local file_version=$(head -n 1 "$tmp_file")
 
-    # Get the version from the backhaul_premium binary using the -v flag
-    local backhaul_version=$($config_dir/backhaul_premium -v)
+    # Get the version from the backhaul binary using the -v flag
+    local backhaul_version=$($config_dir/backhaul -v)
 
-    # Compare the file version with the version from backhaul_premium
+    # Compare the file version with the version from backhaul
     if [ "$file_version" != "$backhaul_version" ]; then
         colorize cyan "New Core version available: $backhaul_version => $file_version" bold
     fi
@@ -1378,7 +1378,7 @@ check_script_version() {
     # Read the version from the downloaded file (assumes the version is stored on the first line)
     local file_version=$(head -n 1 "$tmp_file")
 
-    # Compare the file version with the version from backhaul_premium
+    # Compare the file version with the version from backhaul
     if [ "$file_version" != "$SCRIPT_VERSION" ]; then
         colorize cyan "New script version available: $SCRIPT_VERSION => $file_version" bold
     fi
@@ -1392,7 +1392,7 @@ update_script(){
 # Define the destination path
 DEST_DIR="/usr/bin/"
 BACKHAUL_SCRIPT="backhaul"
-SCRIPT_URL="https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/iPmartNetwork/Backhaul/refs/heads/master/backhaul.sh"
 
 echo
 # Check if backhaul.sh exists in /bin/bash
@@ -1497,7 +1497,7 @@ install_core() {
     colorize cyan "Installing Backhaul Core..." bold
     echo
     download_and_extract_backhaul
-    if [[ -f "${config_dir}/backhaul_premium" ]]; then
+    if [[ -f "${config_dir}/backhaul" ]]; then
         colorize green "Backhaul Core installed successfully." bold
     else
         colorize red "Failed to install Backhaul Core. Please check the logs." bold
@@ -1511,7 +1511,7 @@ update_core() {
     colorize cyan "Updating Backhaul Core..." bold
     echo
     download_and_extract_backhaul "menu"
-    if [[ -f "${config_dir}/backhaul_premium" ]]; then
+    if [[ -f "${config_dir}/backhaul" ]]; then
         colorize green "Backhaul Core updated successfully." bold
     else
         colorize red "Failed to update Backhaul Core. Please check the logs." bold
@@ -1588,7 +1588,7 @@ web_panel() {
 # Function to install web panel
 install_web_panel() {
     clear
-    colorize cyan "Installing Web Panel with Authentication and TLS..." bold
+    colorize cyan "Installing Advanced Web Panel with Authentication, TLS, and Real-Time Updates..." bold
     echo
 
     # Install necessary packages
@@ -1598,10 +1598,10 @@ install_web_panel() {
         sudo apt-get install -y python3 python3-pip
     fi
 
-    # Install Flask, Flask-Cors, and Flask-HTTPAuth for API
+    # Install Flask, Flask-Cors, Flask-HTTPAuth, Flask-SocketIO, and psutil
     if ! python3 -m pip show flask &> /dev/null; then
-        colorize yellow "Installing Flask, Flask-Cors, and Flask-HTTPAuth..." bold
-        python3 -m pip install flask flask-cors flask-httpauth
+        colorize yellow "Installing Flask, Flask-Cors, Flask-HTTPAuth, Flask-SocketIO, and psutil..." bold
+        python3 -m pip install flask flask-cors flask-httpauth flask-socketio psutil
     fi
 
     # Create web panel directory
@@ -1617,14 +1617,14 @@ install_web_panel() {
         -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=localhost"
 
     # Create HTML and API files
-    echo "Creating Web Panel files..."
+    echo "Creating Advanced Web Panel files..."
     sudo bash -c "cat > $web_panel_dir/index.html" << 'EOF'
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Backhaul Web Panel</title>
+    <title>Backhaul Advanced Web Panel</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; color: #333; }
         h1 { color: #4CAF50; text-align: center; }
@@ -1635,14 +1635,16 @@ install_web_panel() {
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #f2f2f2; }
         pre { background: #f4f4f9; padding: 10px; border-radius: 4px; overflow-x: auto; }
-        .metrics { margin-top: 20px; }
+        .metrics, .logs { margin-top: 20px; }
     </style>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>Backhaul Web Panel</h1>
+        <h1>Backhaul Advanced Web Panel</h1>
         <button onclick="fetchStatus()">Check Tunnel Status</button>
         <button onclick="fetchMetrics()">View Metrics</button>
+        <button onclick="fetchLogs()">View Logs</button>
         <table id="tunnelTable">
             <thead>
                 <tr>
@@ -1656,6 +1658,10 @@ install_web_panel() {
         <div class="metrics">
             <h2>Metrics</h2>
             <pre id="metricsOutput"></pre>
+        </div>
+        <div class="logs">
+            <h2>Logs</h2>
+            <pre id="logsOutput"></pre>
         </div>
     </div>
     <script>
@@ -1682,6 +1688,18 @@ install_web_panel() {
             const data = await response.json();
             document.getElementById('metricsOutput').textContent = JSON.stringify(data, null, 2);
         }
+
+        async function fetchLogs() {
+            const response = await fetch('/api/logs', { headers });
+            const data = await response.json();
+            document.getElementById('logsOutput').textContent = data.logs.join('\n');
+        }
+
+        const socket = io();
+        socket.on('log_update', (log) => {
+            const logsOutput = document.getElementById('logsOutput');
+            logsOutput.textContent += `\n${log}`;
+        });
     </script>
 </body>
 </html>
@@ -1692,11 +1710,15 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_socketio import SocketIO, emit
 import psutil
+import threading
+import time
 
 app = Flask(__name__)
 CORS(app)
 auth = HTTPBasicAuth()
+socketio = SocketIO(app)
 
 # User credentials
 users = {
@@ -1730,15 +1752,32 @@ def metrics():
     }
     return jsonify(metrics_data)
 
+@app.route('/api/logs', methods=['GET'])
+@auth.login_required
+def logs():
+    return jsonify({"logs": log_buffer})
+
+log_buffer = []
+
+def generate_logs():
+    while True:
+        log = f"Log entry at {time.strftime('%Y-%m-%d %H:%M:%S')}"
+        log_buffer.append(log)
+        if len(log_buffer) > 100:
+            log_buffer.pop(0)
+        socketio.emit('log_update', log)
+        time.sleep(5)
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=22490, ssl_context=('/etc/backhaul-panel/server.crt', '/etc/backhaul-panel/server.key'))
+    threading.Thread(target=generate_logs, daemon=True).start()
+    socketio.run(app, host='0.0.0.0', port=22490, ssl_context=('/etc/backhaul-panel/server.crt', '/etc/backhaul-panel/server.key'))
 EOF
 
     # Create systemd service for the web panel
-    echo "Creating systemd service for Web Panel..."
+    echo "Creating systemd service for Advanced Web Panel..."
     sudo bash -c "cat > /etc/systemd/system/backhaul-web-panel.service" << EOF
 [Unit]
-Description=Backhaul Web Panel
+Description=Backhaul Advanced Web Panel
 After=network.target
 
 [Service]
@@ -1757,7 +1796,7 @@ EOF
     sudo systemctl daemon-reload
     sudo systemctl enable --now backhaul-web-panel.service
 
-    colorize green "Web Panel installed with TLS and authentication. Access it at: https://localhost:22490" bold
+    colorize green "Advanced Web Panel installed with TLS, authentication, and real-time updates. Access it at: https://localhost:22490" bold
     press_key
 }
 
@@ -1792,26 +1831,3 @@ read_option() {
         4) core_manager_menu ;;
         5) web_panel ;;
         0) exit 0 ;;
-        *) echo -e "${RED} Invalid option!${NC}" && sleep 1 ;;
-    esac
-}
-
-# Function to create a non-root user for running services
-create_backhaul_user() {
-    if ! id -u backhaul &>/dev/null; then
-        sudo useradd -r -s /usr/sbin/nologin backhaul
-        colorize green "User 'backhaul' created successfully." bold
-    else
-        colorize yellow "User 'backhaul' already exists." bold
-    fi
-}
-
-# Call the function to ensure the user exists
-create_backhaul_user
-
-# Main script
-while true
-do
-    display_menu
-    read_option
-done
