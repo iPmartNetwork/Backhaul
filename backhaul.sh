@@ -1143,8 +1143,8 @@ check_and_fix_tunnel_service() {
     local service_name="$1"
     local config_path="$2"
 
-    # Ensure the backhaul binary has execute permissions
-    chmod +x "${config_dir}/backhaul"
+    # Ensure the backhaul binary has correct permissions for all users
+    chmod 755 "${config_dir}/backhaul"
 
     # Check if the service exists
     if ! systemctl list-units --type=service | grep -q "$service_name"; then
