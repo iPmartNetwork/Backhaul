@@ -291,10 +291,10 @@ iran_server_configuration() {
 
     echo
 
+    # Tunnel Port
     while true; do
         echo -ne "[*] Tunnel port: "
         read -r tunnel_port
-
         if [[ "$tunnel_port" =~ ^[0-9]+$ ]] && [ "$tunnel_port" -gt 22 ] && [ "$tunnel_port" -le 65535 ]; then
             if check_port "$tunnel_port" "tcp"; then
                 colorize turquoise "Port $tunnel_port is in use."
@@ -303,43 +303,34 @@ iran_server_configuration() {
             fi
         else
             colorize turquoise "Please enter a valid port number between 23 and 65535."
-            echo
         fi
     done
 
     echo
 
-    # Initialize transport variable
+    # Transport Type
     local transport=""
     while [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; do
         echo -ne "[*] Transport type (tcp/tcpmux/utcpmux/ws/wsmux/uwsmux/udp/tcptun/faketcptun): "
         read -r transport
-
         if [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; then
-            colorize turquoise "Invalid transport type. Please choose from tcp, tcpmux, utcpmux, ws, wsmux, uwsmux, udp, tcptun, faketcptun."
-            echo
+            colorize turquoise "Invalid transport type. Please choose a valid option."
         fi
     done
 
     echo
 
-    # TUN Device Name 
+    # TUN Device Name
     local tun_name="backhaul"
     if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
         while true; do
             echo -ne "[-] TUN Device Name (default backhaul): "
             read -r tun_name
-
-            if [[ -z "$tun_name" ]]; then
-                tun_name="backhaul"
-            fi
-
+            tun_name="${tun_name:-backhaul}"
             if [[ "$tun_name" =~ ^[a-zA-Z0-9]+$ ]]; then
-                echo
                 break
             else
                 colorize turquoise "Please enter a valid TUN device name."
-                echo
             fi
         done
     fi
@@ -350,77 +341,39 @@ iran_server_configuration() {
         while true; do
             echo -ne "[-] TUN Subnet (default 10.10.10.0/24): "
             read -r tun_subnet
-
-            # Set default value if input is empty
-            if [[ -z "$tun_subnet" ]]; then
-                tun_subnet="10.10.10.0/24"
-            fi
-
-            # Validate TUN subnet (CIDR notation)
+            tun_subnet="${tun_subnet:-10.10.10.0/24}"
             if [[ "$tun_subnet" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]{1,2}$ ]]; then
-                # Validate IP and subnet mask
-                IFS='/' read -r ip subnet <<< "$tun_subnet"
-                if [[ "$subnet" -le 32 && "$subnet" -ge 1 ]]; then
-                    IFS='.' read -r a b c d <<< "$ip"
-                    if [[ "$a" -le 255 && "$b" -le 255 && "$c" -le 255 && "$d" -le 255 ]]; then
-                        echo
-                        break
-                    fi
-                fi
+                break
+            else
+                colorize turquoise "Please enter a valid subnet in CIDR notation (e.g., 10.10.10.0/24)."
             fi
-
-            colorize turquoise "Please enter a valid subnet in CIDR notation (e.g., 10.10.10.0/24)."
-            echo
         done
     fi
 
     # TUN MTU
-    local mtu="1500"    
+    local mtu="1500"
     if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
         while true; do
             echo -ne "[-] TUN MTU (default 1500): "
             read -r mtu
-
-            # Set default value if input is empty
-            if [[ -z "$mtu" ]]; then
-                mtu=1500
-            fi
-
-            # Validate MTU value
+            mtu="${mtu:-1500}"
             if [[ "$mtu" =~ ^[0-9]+$ ]] && [ "$mtu" -ge 576 ] && [ "$mtu" -le 9000 ]; then
                 break
+            else
+                colorize turquoise "Please enter a valid MTU value between 576 and 9000."
             fi
-
-            colorize turquoise "Please enter a valid MTU value between 576 and 9000."
-            echo
         done
     fi
-    
 
-    # Accept UDP (only for tcp transport)
-	local accept_udp="" 
-	if [[ "$transport" == "tcp" ]]; then
-	    while [[ "$accept_udp" != "true" && "$accept_udp" != "false" ]]; do
-	        echo -ne "[-] Accept UDP connections over TCP transport (true/false)(default false): "
-	        read -r accept_udp
-	        
-    	    # Set default to "false" if input is empty
-            if [[ -z "$accept_udp" ]]; then
-                accept_udp="false"
-            fi
-        
-        
-	        if [[ "$accept_udp" != "true" && "$accept_udp" != "false" ]]; then
-	            colorize turquoise "Invalid input. Please enter 'true' or 'false'."
-	            echo
-	        fi
-	    done
-	else
-	    # Automatically set accept_udp to false for non-TCP transport
-	    accept_udp="false"
-	fi
-
-    echo 
+    # Accept UDP
+    local accept_udp="false"
+    if [[ "$transport" == "tcp" ]]; then
+        while [[ "$accept_udp" != "true" && "$accept_udp" != "false" ]]; do
+            echo -ne "[-] Accept UDP connections over TCP transport (true/false)(default false): "
+            read -r accept_udp
+            accept_udp="${accept_udp:-false}"
+        done
+    fi
 
     # Channel Size
     local channel_size="2048"
@@ -428,309 +381,35 @@ iran_server_configuration() {
         while true; do
             echo -ne "[-] Channel Size (default 2048): "
             read -r channel_size
-
-            # Set default to 2048 if the input is empty
-            if [[ -z "$channel_size" ]]; then
-                channel_size=2048
-            fi
-        
+            channel_size="${channel_size:-2048}"
             if [[ "$channel_size" =~ ^[0-9]+$ ]] && [ "$channel_size" -gt 64 ] && [ "$channel_size" -le 8192 ]; then
                 break
             else
                 colorize turquoise "Please enter a valid channel size between 64 and 8192."
-                echo
-            fi
-        done
-
-        echo 
-    
-    fi
-
-    # Enable TCP_NODELAY
-    local nodelay=""
-    
-    # Check transport type
-    if [[ "$transport" == "udp" ]]; then
-        nodelay=false
-    else
-        while [[ "$nodelay" != "true" && "$nodelay" != "false" ]]; do
-            echo -ne "[-] Enable TCP_NODELAY (true/false)(default true): "
-            read -r nodelay
-            
-            if [[ -z "$nodelay" ]]; then
-                nodelay=true
-            fi
-        
-    
-            if [[ "$nodelay" != "true" && "$nodelay" != "false" ]]; then
-                colorize turquoise "Invalid input. Please enter 'true' or 'false'."
-                echo
             fi
         done
     fi
-    
-    echo 
-    
-    # HeartBeat
-    local heartbeat=40
-    if [[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; then
-        while true; do
-            echo -ne "[-] Heartbeat (in seconds, default 40): "
-            read -r heartbeat
 
-            if [[ -z "$heartbeat" ]]; then
-                heartbeat=40
-            fi
-                
-            if [[ "$heartbeat" =~ ^[0-9]+$ ]] && [ "$heartbeat" -gt 1 ] && [ "$heartbeat" -le 240 ]; then
-                break
-            else
-                colorize turquoise "Please enter a valid heartbeat between 1 and 240."
-                echo
-            fi
-        done
-
-        echo
-
-    fi
-
-    # Security Token
-    echo -ne "[-] Security Token (press enter to use default value): "
-    read -r token
-    token="${token:-your_token}"
-
-
-    # Mux Conurrancy
-    if [[ "$transport" =~ ^(tcpmux|wsmux)$ ]]; then
-        while true; do
-            echo 
-            echo -ne "[-] Mux concurrency (default 8): "
-            read -r mux
-    
-            if [[ -z "$mux" ]]; then
-                mux=8
-            fi
-        
-            if [[ "$mux" =~ ^[0-9]+$ ]] && [ "$mux" -gt 0 ] && [ "$mux" -le 1000 ]; then
-                break
-            else
-                colorize turquoise "Please enter a valid concurrency between 0 and 1000"
-                echo
-            fi
-        done
-    else
-        mux=8
-    fi
-    
-    	
-    # Mux Version
-    if [[ "$transport" =~ ^(tcpmux|wsmux|utcpmux|uwsmux)$ ]]; then
-        while true; do
-            echo 
-            echo -ne "[-] Mux Version (1 or 2) (default 2): "
-            read -r mux_version
-    
-            # Set default to 1 if input is empty
-            if [[ -z "$mux_version" ]]; then
-                mux_version=2
-            fi
-            
-            # Validate the input for version 1 or 2
-            if [[ "$mux_version" =~ ^[0-9]+$ ]] && [ "$mux_version" -ge 1 ] && [ "$mux_version" -le 2 ]; then
-                break
-            else
-                colorize turquoise "Please enter a valid mux version: 1 or 2."
-                echo
-            fi
-        done
-    else
-        mux_version=2
-    fi
-    
-	echo
-	
-	
-    # Enable Sniffer
-    local sniffer=""
-    while [[ "$sniffer" != "true" && "$sniffer" != "false" ]]; do
-        echo -ne "[-] Enable Sniffer (true/false)(default false): "
-        read -r sniffer
-        
-        if [[ -z "$sniffer" ]]; then
-            sniffer=false
-        fi
-            
-        if [[ "$sniffer" != "true" && "$sniffer" != "false" ]]; then
-            colorize turquoise "Invalid input. Please enter 'true' or 'false'."
-            echo
-        fi
-    done
-	
-	echo 
-	
-	# Get Web Port
-	local web_port=""
-	while true; do
-	    echo -ne "[-] Enter Web Port (default 0 to disable): "
-	    read -r web_port
-	    
-        if [[ -z "$web_port" ]]; then
-            web_port=0
-        fi
-	    if [[ "$web_port" == "0" ]]; then
-	        break
-	    elif [[ "$web_port" =~ ^[0-9]+$ ]] && ((web_port >= 23 && web_port <= 65535)); then
-	        if check_port "$web_port" "tcp"; then
-	            colorize red "Port $web_port is already in use. Please choose a different port."
-	            echo
-	        else
-	            break
-	        fi
-	    else
-	        colorize red "Invalid port. Please enter a number between 22 and 65535, or 0 to disable."
-	        echo
-	    fi
-	done
-    
-    echo
-
-    # Proxy Protocol 
-    if [[ ! "$transport" =~ ^(ws|udp|tcptun|faketcptun)$ ]]; then
-        # Enable Proxy Protocol
-        local proxy_protocol=""
-        while [[ "$proxy_protocol" != "true" && "$proxy_protocol" != "false" ]]; do
-            echo -ne "[-] Enable Proxy Protocol (true/false)(default false): "
-            read -r proxy_protocol
-            
-            if [[ -z "$proxy_protocol" ]]; then
-                proxy_protocol=false
-            fi
-                
-            if [[ "$proxy_protocol" != "true" && "$proxy_protocol" != "false" ]]; then
-                colorize red "Invalid input. Please enter 'true' or 'false'."
-                echo
-            fi
-        done
-    else
-	    # Automatically set proxy_protocol to false for ws and udp
-	    proxy_protocol="false"
-	fi
-
-        
-	echo
-
-    if [[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; then
-        # Display port format options
-        colorize green "[*] Supported Port Formats:" bold
-        echo "1. 443-600                  - Listen on all ports in the range 443 to 600."
-        echo "2. 443-600:5201             - Listen on all ports in the range 443 to 600 and forward traffic to 5201."
-        echo "3. 443-600=1.1.1.1:5201     - Listen on all ports in the range 443 to 600 and forward traffic to 1.1.1.1:5201."
-        echo "4. 443                      - Listen on local port 443 and forward to remote port 443 (default forwarding)."
-        echo "5. 4000=5000                - Listen on local port 4000 (bind to all local IPs) and forward to remote port 5000."
-        echo "6. 127.0.0.2:443=5201       - Bind to specific local IP (127.0.0.2), listen on port 443, and forward to remote port 5201."
-        echo "7. 443=1.1.1.1:5201         - Listen on local port 443 and forward to a specific remote IP (1.1.1.1) on port 5201."
-        #echo "8. 127.0.0.2:443=1.1.1.1:5201 - Bind to specific local IP (127.0.0.2), listen on port 443, and forward to remote IP (1.1.1.1) on port 5201."
-        echo ""
-        
-        # Prompt user for input
-        echo -ne "[*] Enter your ports in the specified formats (separated by commas): "
-        read -r input_ports
-        input_ports=$(echo "$input_ports" | tr -d ' ')
-        IFS=',' read -r -a ports <<< "$input_ports"
-    fi
-
-    # Generate configuration
+    # Generate Configuration
     cat << EOF > "${config_dir}/iran${tunnel_port}.toml"
 [server]
 bind_addr = ":${tunnel_port}"
 transport = "${transport}"
 accept_udp = ${accept_udp}
-token = "${token}"
+token = "your_token"
 keepalive_period = 75
-nodelay = ${nodelay}
+nodelay = true
 channel_size = ${channel_size}
-heartbeat = ${heartbeat}
-mux_con = ${mux}
-mux_version = ${mux_version}
+heartbeat = 40
+mux_con = 8
+mux_version = 2
 mux_framesize = 32768
 mux_recievebuffer = 4194304
 mux_streambuffer = 2000000
-sniffer = ${sniffer}
-web_port = ${web_port}
-sniffer_log = "/root/log.json"
-log_level = "info"
-proxy_protocol= ${proxy_protocol}
 tun_name = "${tun_name}"
 tun_subnet = "${tun_subnet}"
 mtu = ${mtu}
-
-ports = [
 EOF
-
-	# Validate and process port mappings
-	for port in "${ports[@]}"; do
-	    if [[ "$port" =~ ^[0-9]+-[0-9]+$ ]]; then
-	        # Range of ports (e.g., 443-600)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^[0-9]+-[0-9]+:[0-9]+$ ]]; then
-	        # Port range with forwarding to a specific port (e.g., 443-600:5201)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^[0-9]+-[0-9]+=([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):[0-9]+$ ]]; then
-	        # Port range forwarding to a specific remote IP and port (e.g., 443-600=1.1.1.1:5201)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^[0-9]+$ ]]; then
-	        # Single port forwarding (e.g., 443)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^[0-9]+=[0-9]+$ ]]; then
-	        # Single port with forwarding to another port (e.g., 4000=5000)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):[0-9]+=[0-9]+$ ]]; then
-	        # Specific local IP with port forwarding (e.g., 127.0.0.2:443=5201)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^[0-9]+=[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$ ]]; then
-	        # Single port with forwarding to a specific remote IP and port (e.g., 443=1.1.1.1:5201)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):[0-9]+=[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$ ]]; then
-	        # Specific local IP with forwarding to a specific remote IP and port (e.g., 127.0.0.2:443=1.1.1.1:5201)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    else
-	        colorize red "[ERROR] Invalid port mapping: $port. Skipping."
-	        echo
-	    fi
-	done
-	
-	echo "]" >> "${config_dir}/iran${tunnel_port}.toml"
-	
-	echo
-	
-	colorize green "Configuration generated successfully!"
-
-    echo 
-
-    # Create the systemd service
-    cat << EOF > "${service_dir}/backhaul-iran${tunnel_port}.service"
-[Unit]
-Description=Backhaul Iran Port $tunnel_port (Iran)
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=${config_dir}/backhaul_premium -c ${config_dir}/iran${tunnel_port}.toml
-Restart=always
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-    # Reload and enable service
-    systemctl daemon-reload >/dev/null 2>&1
-    if systemctl enable --now "${service_dir}/backhaul-iran${tunnel_port}.service" >/dev/null 2>&1; then
-        colorize green "Iran service with port $tunnel_port enabled to start on boot and started."
-    else
-        colorize red "Failed to enable service with port $tunnel_port. Please check your system configuration."
-        return 1
-    fi
 
     echo
     colorize green "IRAN server configuration completed successfully." bold
@@ -1785,8 +1464,6 @@ mux_version = 2
 mux_framesize = 32768
 mux_recievebuffer = 4194304
 mux_streambuffer = 2000000
-sniffer = false
-log_level = "info"
 EOF
 
         # Create systemd service for the tunnel
