@@ -138,6 +138,10 @@ download_and_extract_backhaul() {
     echo -e "Downloading Backhaul from $DOWNLOAD_URL...\n"
     sleep 1
     curl -sSL -o "$DOWNLOAD_DIR/backhaul.tar.gz" "$DOWNLOAD_URL"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to download Backhaul Core.${NC}"
+        exit 1
+    fi
     echo -e "Extracting Backhaul...\n"
     sleep 1
     mkdir -p "$config_dir"
@@ -147,6 +151,11 @@ download_and_extract_backhaul() {
     rm -rf "$DOWNLOAD_DIR"
     rm -rf "${config_dir}/LICENSE" >/dev/null 2>&1
     rm -rf "${config_dir}/README.md" >/dev/null 2>&1
+    systemctl daemon-reload >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to reload systemd daemon.${NC}"
+        exit 1
+    fi
 }
 
 
@@ -1595,9 +1604,9 @@ manage_web_panel() {
 # Color codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[0m'
-CYAN='\e[36m'
-MAGENTA="\e[95m"
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
 NC='\033[0m' # No Color
 
 # Function to display menu
@@ -1691,12 +1700,12 @@ handle_advanced_options() {
                 ;;
             3) 
                 echo -e "\n\e[1;36mChecking Core Version...\e[0m"
-                check_core_version "https://example.com/core_version.txt"
+                check_core_version "https://raw.githubusercontent.com/wafflenoodle/zenith-stash/main/core_version.txt"
                 press_key
                 ;;
             4) 
                 echo -e "\n\e[1;36mChecking Script Version...\e[0m"
-                check_script_version "https://example.com/script_version.txt"
+                check_script_version "https://raw.githubusercontent.com/wafflenoodle/zenith-stash/main/script_version.txt"
                 press_key
                 ;;
             0) 
