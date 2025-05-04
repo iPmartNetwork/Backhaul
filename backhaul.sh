@@ -183,7 +183,7 @@ EOF
     if [[ -f "${config_dir}/backhaul_premium" ]]; then
     	echo -e "Core Version: \033[36m$($config_dir/backhaul_premium -v)\033[36m"  # Updated to turquoise
     fi
-    echo -e "Telegram Channel: \033[36m@anony_identity\033[0m"  # Updated to turquoise
+    echo -e "Telegram Channel: \033[36m@iPmartch\033[0m"  # Updated to turquoise
 }
 
 # Function to display server location and IP
@@ -223,50 +223,47 @@ check_ipv6() {
 
 check_port() {
     local PORT=$1
-    local TRANSPORT=$2
-
+	local TRANSPORT=$2
+	
     if [ -z "$PORT" ]; then
         echo "Usage: check_port <port> <transport>"
         return 1
     fi
-
-    if ([[ "$TRANSPORT" == "tcp" ]] && ss -tlnp | grep ":$PORT " > /dev/null) || 
-       ([[ "$TRANSPORT" == "udp" ]] && ss -ulnp | grep ":$PORT " > /dev/null); then
-        return 0
-    else
-        return 1
-    fi
+    
+	if ([[ "$TRANSPORT" == "tcp" ]] && ss -tlnp "sport = :$PORT" | grep "$PORT" > /dev/null) || ([[ "$TRANSPORT" == "udp" ]] && ss -ulnp "sport = :$PORT" | grep "$PORT" > /dev/null); then
+		return 0
+	else
+		return 1
+   	fi
 }
 
 # Function for configuring tunnel
 configure_tunnel() {
+    # Check if the Backhaul-core is installed
+    if [[ ! -d "$config_dir" ]]; then
+        echo -e "\nBackhaul-Core directory not found. Install it first through 'Install Backhaul core' option.\n"
+        press_key
+        return 1
+    fi
 
-# check if the Backhaul-core installed or notk if the Backhaul-core installed or notk if the Backhaul-core installed or not
-if [[ ! -d "$config_dir" ]]; then"$config_dir" ]]; then"$config_dir" ]]; then
-    echo -e "\n${RED}Backhaul-Core directory not found. Install it first through 'Install Backhaul core' option.${NC}\n"echo -e "\n${RED}Backhaul-Core directory not found. Install it first through 'Install Backhaul core' option.${NC}\n"echo -e "\n${RED}Backhaul-Core directory not found. Install it first through 'Install Backhaul core' option.${NC}\n"
-    read -p "Press Enter to continue..."ead -p "Press Enter to continue..."ead -p "Press Enter to continue..."
-    return 1 1 1
-fi
-
-    clear   clear   clear
-
+    clear
     echo
-    colorize turquoise "1) Configure for IRAN server" boldse "1) Configure for IRAN server" boldse "1) Configure for IRAN server" bold
-    colorize turquoise "2) Configure for KHAREJ server" bold    colorize turquoise "2) Configure for KHAREJ server" bold    colorize turquoise "2) Configure for KHAREJ server" bold
+    colorize turquoise "1) Configure for IRAN server" bold
+    colorize turquoise "2) Configure for KHAREJ server" bold
     colorize red "0) Back to Main Menu" bold
     echo
     read -p "Enter your choice: " configure_choice
     case "$configure_choice" in
-        1) iran_server_configuration ;;ran_server_configuration ;;ran_server_configuration ;;
-        2) kharej_server_configuration ;;      2) kharej_server_configuration ;;      2) kharej_server_configuration ;;
-        0) return ;;        0) return ;;        0) return ;;
-        *) echo -e "${RED}Invalid option!${NC}" && sleep 1 ;;) echo -e "${RED}Invalid option!${NC}" && sleep 1 ;;) echo -e "${RED}Invalid option!${NC}" && sleep 1 ;;
-    esac    esac    esac
+        1) iran_server_configuration ;;
+        2) kharej_server_configuration ;;
+        0) return ;;
+        *) echo -e "Invalid option!" && sleep 1 ;;
+    esac
     echo
-    read -p "Press Enter to continue..."
+    press_key
 }
 
-#Global VariablesVariablesVariables
+#Global Variables
 service_dir="/etc/systemd/system"
 
 
@@ -276,18 +273,18 @@ iran_server_configuration() {
 
     echo
 
-    while true; do   while true; do   while true; do
-        echo -ne "[*] Tunnel port: "        echo -ne "[*] Tunnel port: "        echo -ne "[*] Tunnel port: "
-        read -r tunnel_portunnel_portunnel_port
+    while true; do
+        echo -ne "[*] Tunnel port: "
+        read -r tunnel_port
 
-        if [[ "$tunnel_port" =~ ^[0-9]+$ ]] && [ "$tunnel_port" -gt 22 ] && [ "$tunnel_port" -le 65535 ]; then        if [[ "$tunnel_port" =~ ^[0-9]+$ ]] && [ "$tunnel_port" -gt 22 ] && [ "$tunnel_port" -le 65535 ]; then        if [[ "$tunnel_port" =~ ^[0-9]+$ ]] && [ "$tunnel_port" -gt 22 ] && [ "$tunnel_port" -le 65535 ]; then
-            if check_port "$tunnel_port" "tcp"; then            if check_port "$tunnel_port" "tcp"; then            if check_port "$tunnel_port" "tcp"; then
-                colorize turquoise "Port $tunnel_port is in use."ise "Port $tunnel_port is in use."ise "Port $tunnel_port is in use."
-            else   else   else
+        if [[ "$tunnel_port" =~ ^[0-9]+$ ]] && [ "$tunnel_port" -gt 22 ] && [ "$tunnel_port" -le 65535 ]; then
+            if check_port "$tunnel_port" "tcp"; then
+                colorize turquoise "Port $tunnel_port is in use."
+            else
                 break
-            fi            fi            fi
-        elseelseelse
-            colorize turquoise "Please enter a valid port number between 23 and 65535."            colorize turquoise "Please enter a valid port number between 23 and 65535."            colorize turquoise "Please enter a valid port number between 23 and 65535."
+            fi
+        else
+            colorize turquoise "Please enter a valid port number between 23 and 65535."
             echo
         fi
     done
@@ -295,137 +292,137 @@ iran_server_configuration() {
     echo
 
     # Initialize transport variable
-    local transport=""ort=""ort=""
-    while [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; dosport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; dosport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; do
-        echo -ne "[*] Transport type (tcp/tcpmux/utcpmux/ws/wsmux/uwsmux/udp/tcptun/faketcptun): "ne "[*] Transport type (tcp/tcpmux/utcpmux/ws/wsmux/uwsmux/udp/tcptun/faketcptun): "ne "[*] Transport type (tcp/tcpmux/utcpmux/ws/wsmux/uwsmux/udp/tcptun/faketcptun): "
-        read -r transport -r transport -r transport
+    local transport=""
+    while [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; do
+        echo -ne "[*] Transport type (tcp/tcpmux/utcpmux/ws/wsmux/uwsmux/udp/tcptun/faketcptun): "
+        read -r transport
 
-        if [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; then"$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; then"$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; then
-            colorize turquoise "Invalid transport type. Please choose from tcp, tcpmux, utcpmux, ws, wsmux, uwsmux, udp, tcptun, faketcptun."  colorize turquoise "Invalid transport type. Please choose from tcp, tcpmux, utcpmux, ws, wsmux, uwsmux, udp, tcptun, faketcptun."  colorize turquoise "Invalid transport type. Please choose from tcp, tcpmux, utcpmux, ws, wsmux, uwsmux, udp, tcptun, faketcptun."
-            echo    echo    echo
-        fi        fi        fi
+        if [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; then
+            colorize turquoise "Invalid transport type. Please choose from tcp, tcpmux, utcpmux, ws, wsmux, uwsmux, udp, tcptun, faketcptun."
+            echo
+        fi
     done
 
     echo
 
     # TUN Device Name 
     local tun_name="backhaul"
-    if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then "tcptun" || "$transport" == "faketcptun" ]]; then "tcptun" || "$transport" == "faketcptun" ]]; then
-        while true; do        while true; do        while true; do
+    if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
+        while true; do
             echo -ne "[-] TUN Device Name (default backhaul): "
             read -r tun_name
 
-            if [[ -z "$tun_name" ]]; then  if [[ -z "$tun_name" ]]; then  if [[ -z "$tun_name" ]]; then
-                tun_name="backhaul"        tun_name="backhaul"        tun_name="backhaul"
-            fi            fi            fi
+            if [[ -z "$tun_name" ]]; then
+                tun_name="backhaul"
+            fi
 
-            if [[ "$tun_name" =~ ^[a-zA-Z0-9]+$ ]]; then            if [[ "$tun_name" =~ ^[a-zA-Z0-9]+$ ]]; then            if [[ "$tun_name" =~ ^[a-zA-Z0-9]+$ ]]; then
+            if [[ "$tun_name" =~ ^[a-zA-Z0-9]+$ ]]; then
                 echo
                 break
             else
-                colorize turquoise "Please enter a valid TUN device name."ze turquoise "Please enter a valid TUN device name."ze turquoise "Please enter a valid TUN device name."
+                colorize turquoise "Please enter a valid TUN device name."
                 echo
             fi
-        done        done        done
+        done
     fi
 
-    # TUN Subnetetet
-    local tun_subnet="10.10.10.0/24"    local tun_subnet="10.10.10.0/24"    local tun_subnet="10.10.10.0/24"
-    if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; thenaketcptun" ]]; thenaketcptun" ]]; then
-        while true; dododo
-            echo -ne "[-] TUN Subnet (default 10.10.10.0/24): ""[-] TUN Subnet (default 10.10.10.0/24): ""[-] TUN Subnet (default 10.10.10.0/24): "
-            read -r tun_subnet -r tun_subnet -r tun_subnet
+    # TUN Subnet
+    local tun_subnet="10.10.10.0/24"
+    if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
+        while true; do
+            echo -ne "[-] TUN Subnet (default 10.10.10.0/24): "
+            read -r tun_subnet
 
-            # Set default value if input is emptyfault value if input is emptyfault value if input is empty
-            if [[ -z "$tun_subnet" ]]; then [[ -z "$tun_subnet" ]]; then [[ -z "$tun_subnet" ]]; then
-                tun_subnet="10.10.10.0/24"    tun_subnet="10.10.10.0/24"    tun_subnet="10.10.10.0/24"
-            fi      fi      fi
+            # Set default value if input is empty
+            if [[ -z "$tun_subnet" ]]; then
+                tun_subnet="10.10.10.0/24"
+            fi
 
-            # Validate TUN subnet (CIDR notation)lidate TUN subnet (CIDR notation)lidate TUN subnet (CIDR notation)
-            if [[ "$tun_subnet" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]{1,2}$ ]]; then[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]{1,2}$ ]]; then[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]{1,2}$ ]]; then
+            # Validate TUN subnet (CIDR notation)
+            if [[ "$tun_subnet" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]{1,2}$ ]]; then
                 # Validate IP and subnet mask
-                IFS='/' read -r ip subnet <<< "$tun_subnet"' read -r ip subnet <<< "$tun_subnet"' read -r ip subnet <<< "$tun_subnet"
-                if [[ "$subnet" -le 32 && "$subnet" -ge 1 ]]; thenhenhen
-                    IFS='.' read -r a b c d <<< "$ip"ad -r a b c d <<< "$ip"ad -r a b c d <<< "$ip"
-                    if [[ "$a" -le 255 && "$b" -le 255 && "$c" -le 255 && "$d" -le 255 ]]; then                    if [[ "$a" -le 255 && "$b" -le 255 && "$c" -le 255 && "$d" -le 255 ]]; then                    if [[ "$a" -le 255 && "$b" -le 255 && "$c" -le 255 && "$d" -le 255 ]]; then
+                IFS='/' read -r ip subnet <<< "$tun_subnet"
+                if [[ "$subnet" -le 32 && "$subnet" -ge 1 ]]; then
+                    IFS='.' read -r a b c d <<< "$ip"
+                    if [[ "$a" -le 255 && "$b" -le 255 && "$c" -le 255 && "$d" -le 255 ]]; then
                         echo
                         break
                     fi
-                fi  fi  fi
-            fi            fi            fi
+                fi
+            fi
 
-            colorize turquoise "Please enter a valid subnet in CIDR notation (e.g., 10.10.10.0/24)."10.10.10.0/24)."10.10.10.0/24)."
+            colorize turquoise "Please enter a valid subnet in CIDR notation (e.g., 10.10.10.0/24)."
             echo
         done
     fi
 
     # TUN MTU
     local mtu="1500"    
-    if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; thenptun" || "$transport" == "faketcptun" ]]; thenptun" || "$transport" == "faketcptun" ]]; then
+    if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
         while true; do
-            echo -ne "[-] TUN MTU (default 1500): "ne "[-] TUN MTU (default 1500): "ne "[-] TUN MTU (default 1500): "
-            read -r mtuad -r mtuad -r mtu
+            echo -ne "[-] TUN MTU (default 1500): "
+            read -r mtu
 
             # Set default value if input is empty
-            if [[ -z "$mtu" ]]; then[ -z "$mtu" ]]; then[ -z "$mtu" ]]; then
-                mtu=1500    mtu=1500    mtu=1500
-            fi      fi      fi
+            if [[ -z "$mtu" ]]; then
+                mtu=1500
+            fi
 
-            # Validate MTU value Validate MTU value Validate MTU value
-            if [[ "$mtu" =~ ^[0-9]+$ ]] && [ "$mtu" -ge 576 ] && [ "$mtu" -le 9000 ]; then =~ ^[0-9]+$ ]] && [ "$mtu" -ge 576 ] && [ "$mtu" -le 9000 ]; then =~ ^[0-9]+$ ]] && [ "$mtu" -ge 576 ] && [ "$mtu" -le 9000 ]; then
+            # Validate MTU value
+            if [[ "$mtu" =~ ^[0-9]+$ ]] && [ "$mtu" -ge 576 ] && [ "$mtu" -le 9000 ]; then
                 break
             fi
 
-            colorize turquoise "Please enter a valid MTU value between 576 and 9000."rquoise "Please enter a valid MTU value between 576 and 9000."rquoise "Please enter a valid MTU value between 576 and 9000."
-            echo            echo            echo
+            colorize turquoise "Please enter a valid MTU value between 576 and 9000."
+            echo
         done
     fi
     
 
-    # Accept UDP (only for tcp transport)    # Accept UDP (only for tcp transport)    # Accept UDP (only for tcp transport)
+    # Accept UDP (only for tcp transport)
 	local accept_udp="" 
 	if [[ "$transport" == "tcp" ]]; then
-	    while [[ "$accept_udp" != "true" && "$accept_udp" != "false" ]]; dot_udp" != "true" && "$accept_udp" != "false" ]]; dot_udp" != "true" && "$accept_udp" != "false" ]]; do
-	        echo -ne "[-] Accept UDP connections over TCP transport (true/false)(default false): "-ne "[-] Accept UDP connections over TCP transport (true/false)(default false): "-ne "[-] Accept UDP connections over TCP transport (true/false)(default false): "
-	        read -r accept_udp	        read -r accept_udp	        read -r accept_udp
+	    while [[ "$accept_udp" != "true" && "$accept_udp" != "false" ]]; do
+	        echo -ne "[-] Accept UDP connections over TCP transport (true/false)(default false): "
+	        read -r accept_udp
 	        
-    	    # Set default to "false" if input is emptyefault to "false" if input is emptyefault to "false" if input is empty
-            if [[ -z "$accept_udp" ]]; thenif [[ -z "$accept_udp" ]]; thenif [[ -z "$accept_udp" ]]; then
-                accept_udp="false"          accept_udp="false"          accept_udp="false"
-            fi        fi        fi
-                        
+    	    # Set default to "false" if input is empty
+            if [[ -z "$accept_udp" ]]; then
+                accept_udp="false"
+            fi
         
-	        if [[ "$accept_udp" != "true" && "$accept_udp" != "false" ]]; thenpt_udp" != "true" && "$accept_udp" != "false" ]]; thenpt_udp" != "true" && "$accept_udp" != "false" ]]; then
-	            colorize turquoise "Invalid input. Please enter 'true' or 'false'."lid input. Please enter 'true' or 'false'."lid input. Please enter 'true' or 'false'."
+        
+	        if [[ "$accept_udp" != "true" && "$accept_udp" != "false" ]]; then
+	            colorize turquoise "Invalid input. Please enter 'true' or 'false'."
 	            echo
 	        fi
 	    done
 	else
-	    # Automatically set accept_udp to false for non-TCP transportn-TCP transportn-TCP transport
+	    # Automatically set accept_udp to false for non-TCP transport
 	    accept_udp="false"
 	fi
 
-    echo   
+    echo 
 
     # Channel Size
     local channel_size="2048"
-    if [[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; thenport" != "tcptun" && "$transport" != "faketcptun" ]]; thenport" != "tcptun" && "$transport" != "faketcptun" ]]; then
-        while true; dole true; dole true; do
-            echo -ne "[-] Channel Size (default 2048): "   echo -ne "[-] Channel Size (default 2048): "   echo -ne "[-] Channel Size (default 2048): "
-            read -r channel_size       read -r channel_size       read -r channel_size
+    if [[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; then
+        while true; do
+            echo -ne "[-] Channel Size (default 2048): "
+            read -r channel_size
 
-            # Set default to 2048 if the input is emptylt to 2048 if the input is emptylt to 2048 if the input is empty
-            if [[ -z "$channel_size" ]]; then         if [[ -z "$channel_size" ]]; then         if [[ -z "$channel_size" ]]; then
-                channel_size=2048                channel_size=2048                channel_size=2048
-            fi   fi   fi
-                        
-            if [[ "$channel_size" =~ ^[0-9]+$ ]] && [ "$channel_size" -gt 64 ] && [ "$channel_size" -le 8192 ]; then"$channel_size" =~ ^[0-9]+$ ]] && [ "$channel_size" -gt 64 ] && [ "$channel_size" -le 8192 ]; then"$channel_size" =~ ^[0-9]+$ ]] && [ "$channel_size" -gt 64 ] && [ "$channel_size" -le 8192 ]; then
+            # Set default to 2048 if the input is empty
+            if [[ -z "$channel_size" ]]; then
+                channel_size=2048
+            fi
+        
+            if [[ "$channel_size" =~ ^[0-9]+$ ]] && [ "$channel_size" -gt 64 ] && [ "$channel_size" -le 8192 ]; then
                 break
             else
-                colorize turquoise "Please enter a valid channel size between 64 and 8192."ze turquoise "Please enter a valid channel size between 64 and 8192."ze turquoise "Please enter a valid channel size between 64 and 8192."
+                colorize turquoise "Please enter a valid channel size between 64 and 8192."
                 echo
             fi
-        done        done        done
+        done
 
         echo 
     
@@ -435,42 +432,42 @@ iran_server_configuration() {
     local nodelay=""
     
     # Check transport type
-    if [[ "$transport" == "udp" ]]; thent" == "udp" ]]; thent" == "udp" ]]; then
-        nodelay=falsey=falsey=false
+    if [[ "$transport" == "udp" ]]; then
+        nodelay=false
     else
-        while [[ "$nodelay" != "true" && "$nodelay" != "false" ]]; do        while [[ "$nodelay" != "true" && "$nodelay" != "false" ]]; do        while [[ "$nodelay" != "true" && "$nodelay" != "false" ]]; do
-            echo -ne "[-] Enable TCP_NODELAY (true/false)(default true): "cho -ne "[-] Enable TCP_NODELAY (true/false)(default true): "cho -ne "[-] Enable TCP_NODELAY (true/false)(default true): "
-            read -r nodelay        read -r nodelay        read -r nodelay
-                        
-            if [[ -z "$nodelay" ]]; then            if [[ -z "$nodelay" ]]; then            if [[ -z "$nodelay" ]]; then
-                nodelay=truetruetrue
+        while [[ "$nodelay" != "true" && "$nodelay" != "false" ]]; do
+            echo -ne "[-] Enable TCP_NODELAY (true/false)(default true): "
+            read -r nodelay
+            
+            if [[ -z "$nodelay" ]]; then
+                nodelay=true
             fi
-                
+        
     
-            if [[ "$nodelay" != "true" && "$nodelay" != "false" ]]; then& "$nodelay" != "false" ]]; then& "$nodelay" != "false" ]]; then
-                colorize turquoise "Invalid input. Please enter 'true' or 'false'."ize turquoise "Invalid input. Please enter 'true' or 'false'."ize turquoise "Invalid input. Please enter 'true' or 'false'."
-                echo        echo        echo
+            if [[ "$nodelay" != "true" && "$nodelay" != "false" ]]; then
+                colorize turquoise "Invalid input. Please enter 'true' or 'false'."
+                echo
             fi
         done
     fi
     
     echo 
     
-    # HeartBeattt
-    local heartbeat=40l heartbeat=40l heartbeat=40
-    if [[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; thenif [[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; thenif [[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; then
+    # HeartBeat
+    local heartbeat=40
+    if [[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; then
         while true; do
             echo -ne "[-] Heartbeat (in seconds, default 40): "
-            read -r heartbeatheartbeatheartbeat
+            read -r heartbeat
 
-            if [[ -z "$heartbeat" ]]; thenif [[ -z "$heartbeat" ]]; thenif [[ -z "$heartbeat" ]]; then
-                heartbeat=40          heartbeat=40          heartbeat=40
-            fi        fi        fi
-                              
-            if [[ "$heartbeat" =~ ^[0-9]+$ ]] && [ "$heartbeat" -gt 1 ] && [ "$heartbeat" -le 240 ]; then        if [[ "$heartbeat" =~ ^[0-9]+$ ]] && [ "$heartbeat" -gt 1 ] && [ "$heartbeat" -le 240 ]; then        if [[ "$heartbeat" =~ ^[0-9]+$ ]] && [ "$heartbeat" -gt 1 ] && [ "$heartbeat" -le 240 ]; then
-                break break break
+            if [[ -z "$heartbeat" ]]; then
+                heartbeat=40
+            fi
+                
+            if [[ "$heartbeat" =~ ^[0-9]+$ ]] && [ "$heartbeat" -gt 1 ] && [ "$heartbeat" -le 240 ]; then
+                break
             else
-                colorize turquoise "Please enter a valid heartbeat between 1 and 240."1 and 240."1 and 240."
+                colorize turquoise "Please enter a valid heartbeat between 1 and 240."
                 echo
             fi
         done
@@ -480,53 +477,53 @@ iran_server_configuration() {
     fi
 
     # Security Token
-    echo -ne "[-] Security Token (press enter to use default value): "urity Token (press enter to use default value): "urity Token (press enter to use default value): "
-    read -r tokennn
+    echo -ne "[-] Security Token (press enter to use default value): "
+    read -r token
     token="${token:-your_token}"
 
 
-    # Mux Conurrancynurrancynurrancy
-    if [[ "$transport" =~ ^(tcpmux|wsmux)$ ]]; then    if [[ "$transport" =~ ^(tcpmux|wsmux)$ ]]; then    if [[ "$transport" =~ ^(tcpmux|wsmux)$ ]]; then
-        while true; doe true; doe true; do
-            echo             echo             echo 
-            echo -ne "[-] Mux concurrency (default 8): "      echo -ne "[-] Mux concurrency (default 8): "      echo -ne "[-] Mux concurrency (default 8): "
-            read -r mux            read -r mux            read -r mux
+    # Mux Conurrancy
+    if [[ "$transport" =~ ^(tcpmux|wsmux)$ ]]; then
+        while true; do
+            echo 
+            echo -ne "[-] Mux concurrency (default 8): "
+            read -r mux
     
             if [[ -z "$mux" ]]; then
-                mux=8ux=8ux=8
+                mux=8
             fi
-                        
-            if [[ "$mux" =~ ^[0-9]+$ ]] && [ "$mux" -gt 0 ] && [ "$mux" -le 1000 ]; then            if [[ "$mux" =~ ^[0-9]+$ ]] && [ "$mux" -gt 0 ] && [ "$mux" -le 1000 ]; then            if [[ "$mux" =~ ^[0-9]+$ ]] && [ "$mux" -gt 0 ] && [ "$mux" -le 1000 ]; then
-                breakkk
+        
+            if [[ "$mux" =~ ^[0-9]+$ ]] && [ "$mux" -gt 0 ] && [ "$mux" -le 1000 ]; then
+                break
             else
-                colorize turquoise "Please enter a valid concurrency between 0 and 1000"ze turquoise "Please enter a valid concurrency between 0 and 1000"ze turquoise "Please enter a valid concurrency between 0 and 1000"
-                echochocho
+                colorize turquoise "Please enter a valid concurrency between 0 and 1000"
+                echo
             fi
         done
-    elseelseelse
+    else
         mux=8
     fi
     
     	
     # Mux Version
-    if [[ "$transport" =~ ^(tcpmux|wsmux|utcpmux|uwsmux)$ ]]; then" =~ ^(tcpmux|wsmux|utcpmux|uwsmux)$ ]]; then" =~ ^(tcpmux|wsmux|utcpmux|uwsmux)$ ]]; then
-        while true; doue; doue; do
+    if [[ "$transport" =~ ^(tcpmux|wsmux|utcpmux|uwsmux)$ ]]; then
+        while true; do
             echo 
-            echo -ne "[-] Mux Version (1 or 2) (default 2): " "[-] Mux Version (1 or 2) (default 2): " "[-] Mux Version (1 or 2) (default 2): "
-            read -r mux_versionad -r mux_versionad -r mux_version
+            echo -ne "[-] Mux Version (1 or 2) (default 2): "
+            read -r mux_version
     
-            # Set default to 1 if input is empty    # Set default to 1 if input is empty    # Set default to 1 if input is empty
-            if [[ -z "$mux_version" ]]; thenf [[ -z "$mux_version" ]]; thenf [[ -z "$mux_version" ]]; then
-                mux_version=2          mux_version=2          mux_version=2
-            fi        fi        fi
-                          
-            # Validate the input for version 1 or 2idate the input for version 1 or 2idate the input for version 1 or 2
-            if [[ "$mux_version" =~ ^[0-9]+$ ]] && [ "$mux_version" -ge 1 ] && [ "$mux_version" -le 2 ]; then" -ge 1 ] && [ "$mux_version" -le 2 ]; then" -ge 1 ] && [ "$mux_version" -le 2 ]; then
+            # Set default to 1 if input is empty
+            if [[ -z "$mux_version" ]]; then
+                mux_version=2
+            fi
+            
+            # Validate the input for version 1 or 2
+            if [[ "$mux_version" =~ ^[0-9]+$ ]] && [ "$mux_version" -ge 1 ] && [ "$mux_version" -le 2 ]; then
                 break
             else
-                colorize turquoise "Please enter a valid mux version: 1 or 2."version: 1 or 2."version: 1 or 2."
+                colorize turquoise "Please enter a valid mux version: 1 or 2."
                 echo
-            fi        fi        fi
+            fi
         done
     else
         mux_version=2
@@ -535,16 +532,16 @@ iran_server_configuration() {
 	echo
 	
 	
-    # Enable Snifferfferffer
+    # Enable Sniffer
     local sniffer=""
-    while [[ "$sniffer" != "true" && "$sniffer" != "false" ]]; doer" != "true" && "$sniffer" != "false" ]]; doer" != "true" && "$sniffer" != "false" ]]; do
-        echo -ne "[-] Enable Sniffer (true/false)(default false): "ne "[-] Enable Sniffer (true/false)(default false): "ne "[-] Enable Sniffer (true/false)(default false): "
-        read -r sniffer -r sniffer -r sniffer
+    while [[ "$sniffer" != "true" && "$sniffer" != "false" ]]; do
+        echo -ne "[-] Enable Sniffer (true/false)(default false): "
+        read -r sniffer
         
-        if [[ -z "$sniffer" ]]; theniffer" ]]; theniffer" ]]; then
-            sniffer=false      sniffer=false      sniffer=false
-        fi    fi    fi
-                          
+        if [[ -z "$sniffer" ]]; then
+            sniffer=false
+        fi
+            
         if [[ "$sniffer" != "true" && "$sniffer" != "false" ]]; then
             colorize turquoise "Invalid input. Please enter 'true' or 'false'."
             echo
@@ -562,77 +559,77 @@ iran_server_configuration() {
         if [[ -z "$web_port" ]]; then
             web_port=0
             echo
-        fi       fi       fi
-    donenene
+        fi
+    done
 	
 	echo 
 	
 	# Get Web Port
 	local web_port=""
 	while true; do
-	    echo -ne "[-] Enter Web Port (default 0 to disable): "echo -ne "[-] Enter Web Port (default 0 to disable): "echo -ne "[-] Enter Web Port (default 0 to disable): "
+	    echo -ne "[-] Enter Web Port (default 0 to disable): "
 	    read -r web_port
 	    
-        if [[ -z "$web_port" ]]; then "$web_port" ]]; then "$web_port" ]]; then
-            web_port=0  web_port=0  web_port=0
-        fififi
-	    if [[ "$web_port" == "0" ]]; then    if [[ "$web_port" == "0" ]]; then    if [[ "$web_port" == "0" ]]; then
-	        break   break   break
-	    elif [[ "$web_port" =~ ^[0-9]+$ ]] && ((web_port >= 23 && web_port <= 65535)); then    elif [[ "$web_port" =~ ^[0-9]+$ ]] && ((web_port >= 23 && web_port <= 65535)); then    elif [[ "$web_port" =~ ^[0-9]+$ ]] && ((web_port >= 23 && web_port <= 65535)); then
-	        if check_port "$web_port" "tcp"; thenck_port "$web_port" "tcp"; thenck_port "$web_port" "tcp"; then
-	            colorize red "Port $web_port is already in use. Please choose a different port."ize red "Port $web_port is already in use. Please choose a different port."ize red "Port $web_port is already in use. Please choose a different port."
-	            echohoho
+        if [[ -z "$web_port" ]]; then
+            web_port=0
+        fi
+	    if [[ "$web_port" == "0" ]]; then
+	        break
+	    elif [[ "$web_port" =~ ^[0-9]+$ ]] && ((web_port >= 23 && web_port <= 65535)); then
+	        if check_port "$web_port" "tcp"; then
+	            colorize red "Port $web_port is already in use. Please choose a different port."
+	            echo
 	        else
 	            break
-	        fi    fi    fi
+	        fi
 	    else
-	        colorize red "Invalid port. Please enter a number between 22 and 65535, or 0 to disable.""Invalid port. Please enter a number between 22 and 65535, or 0 to disable.""Invalid port. Please enter a number between 22 and 65535, or 0 to disable."
-	        echochocho
+	        colorize red "Invalid port. Please enter a number between 22 and 65535, or 0 to disable."
+	        echo
 	    fi
 	done
     
     echo
 
-    # Proxy Protocol col col 
-    if [[ ! "$transport" =~ ^(ws|udp|tcptun|faketcptun)$ ]]; then$transport" =~ ^(ws|udp|tcptun|faketcptun)$ ]]; then$transport" =~ ^(ws|udp|tcptun|faketcptun)$ ]]; then
-        # Enable Proxy Protocolroxy Protocolroxy Protocol
-        local proxy_protocol=""al proxy_protocol=""al proxy_protocol=""
-        while [[ "$proxy_protocol" != "true" && "$proxy_protocol" != "false" ]]; dohile [[ "$proxy_protocol" != "true" && "$proxy_protocol" != "false" ]]; dohile [[ "$proxy_protocol" != "true" && "$proxy_protocol" != "false" ]]; do
+    # Proxy Protocol 
+    if [[ ! "$transport" =~ ^(ws|udp|tcptun|faketcptun)$ ]]; then
+        # Enable Proxy Protocol
+        local proxy_protocol=""
+        while [[ "$proxy_protocol" != "true" && "$proxy_protocol" != "false" ]]; do
             echo -ne "[-] Enable Proxy Protocol (true/false)(default false): "
-            read -r proxy_protocolead -r proxy_protocolead -r proxy_protocol
-                      
-            if [[ -z "$proxy_protocol" ]]; then       if [[ -z "$proxy_protocol" ]]; then       if [[ -z "$proxy_protocol" ]]; then
-                proxy_protocol=false            proxy_protocol=false            proxy_protocol=false
-            fi    fi    fi
-                                                
-            if [[ "$proxy_protocol" != "true" && "$proxy_protocol" != "false" ]]; thenroxy_protocol" != "true" && "$proxy_protocol" != "false" ]]; thenroxy_protocol" != "true" && "$proxy_protocol" != "false" ]]; then
-                colorize red "Invalid input. Please enter 'true' or 'false'."or 'false'."or 'false'."
+            read -r proxy_protocol
+            
+            if [[ -z "$proxy_protocol" ]]; then
+                proxy_protocol=false
+            fi
+                
+            if [[ "$proxy_protocol" != "true" && "$proxy_protocol" != "false" ]]; then
+                colorize red "Invalid input. Please enter 'true' or 'false'."
                 echo
             fi
         done
     else
-	    # Automatically set proxy_protocol to false for ws and udptocol to false for ws and udptocol to false for ws and udp
-	    proxy_protocol="false"rotocol="false"rotocol="false"
+	    # Automatically set proxy_protocol to false for ws and udp
+	    proxy_protocol="false"
 	fi
 
         
 	echo
 
     if [[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; then
-        # Display port format optionsrt format optionsrt format options
-        colorize green "[*] Supported Port Formats:" boldze green "[*] Supported Port Formats:" boldze green "[*] Supported Port Formats:" bold
-        echo "1. 443-600                  - Listen on all ports in the range 443 to 600." "1. 443-600                  - Listen on all ports in the range 443 to 600." "1. 443-600                  - Listen on all ports in the range 443 to 600."
-        echo "2. 443-600:5201             - Listen on all ports in the range 443 to 600 and forward traffic to 5201."echo "2. 443-600:5201             - Listen on all ports in the range 443 to 600 and forward traffic to 5201."echo "2. 443-600:5201             - Listen on all ports in the range 443 to 600 and forward traffic to 5201."
-        echo "3. 443-600=1.1.1.1:5201     - Listen on all ports in the range 443 to 600 and forward traffic to 1.1.1.1:5201." in the range 443 to 600 and forward traffic to 1.1.1.1:5201." in the range 443 to 600 and forward traffic to 1.1.1.1:5201."
-        echo "4. 443                      - Listen on local port 443 and forward to remote port 443 (default forwarding)."               - Listen on local port 443 and forward to remote port 443 (default forwarding)."               - Listen on local port 443 and forward to remote port 443 (default forwarding)."
-        echo "5. 4000=5000                - Listen on local port 4000 (bind to all local IPs) and forward to remote port 5000."     echo "5. 4000=5000                - Listen on local port 4000 (bind to all local IPs) and forward to remote port 5000."     echo "5. 4000=5000                - Listen on local port 4000 (bind to all local IPs) and forward to remote port 5000."
-        echo "6. 127.0.0.2:443=5201       - Bind to specific local IP (127.0.0.2), listen on port 443, and forward to remote port 5201."        echo "6. 127.0.0.2:443=5201       - Bind to specific local IP (127.0.0.2), listen on port 443, and forward to remote port 5201."        echo "6. 127.0.0.2:443=5201       - Bind to specific local IP (127.0.0.2), listen on port 443, and forward to remote port 5201."
-        echo "7. 443=1.1.1.1:5201         - Listen on local port 443 and forward to a specific remote IP (1.1.1.1) on port 5201."echo "7. 443=1.1.1.1:5201         - Listen on local port 443 and forward to a specific remote IP (1.1.1.1) on port 5201."echo "7. 443=1.1.1.1:5201         - Listen on local port 443 and forward to a specific remote IP (1.1.1.1) on port 5201."
-        #echo "8. 127.0.0.2:443=1.1.1.1:5201 - Bind to specific local IP (127.0.0.2), listen on port 443, and forward to remote IP (1.1.1.1) on port 5201."   #echo "8. 127.0.0.2:443=1.1.1.1:5201 - Bind to specific local IP (127.0.0.2), listen on port 443, and forward to remote IP (1.1.1.1) on port 5201."   #echo "8. 127.0.0.2:443=1.1.1.1:5201 - Bind to specific local IP (127.0.0.2), listen on port 443, and forward to remote IP (1.1.1.1) on port 5201."
-        echo ""        echo ""        echo ""
+        # Display port format options
+        colorize green "[*] Supported Port Formats:" bold
+        echo "1. 443-600                  - Listen on all ports in the range 443 to 600."
+        echo "2. 443-600:5201             - Listen on all ports in the range 443 to 600 and forward traffic to 5201."
+        echo "3. 443-600=1.1.1.1:5201     - Listen on all ports in the range 443 to 600 and forward traffic to 1.1.1.1:5201."
+        echo "4. 443                      - Listen on local port 443 and forward to remote port 443 (default forwarding)."
+        echo "5. 4000=5000                - Listen on local port 4000 (bind to all local IPs) and forward to remote port 5000."
+        echo "6. 127.0.0.2:443=5201       - Bind to specific local IP (127.0.0.2), listen on port 443, and forward to remote port 5201."
+        echo "7. 443=1.1.1.1:5201         - Listen on local port 443 and forward to a specific remote IP (1.1.1.1) on port 5201."
+        #echo "8. 127.0.0.2:443=1.1.1.1:5201 - Bind to specific local IP (127.0.0.2), listen on port 443, and forward to remote IP (1.1.1.1) on port 5201."
+        echo ""
         
         # Prompt user for input
-        echo -ne "[*] Enter your ports in the specified formats (separated by commas): "ormats (separated by commas): "ormats (separated by commas): "
+        echo -ne "[*] Enter your ports in the specified formats (separated by commas): "
         read -r input_ports
         input_ports=$(echo "$input_ports" | tr -d ' ')
         IFS=',' read -r -a ports <<< "$input_ports"
@@ -641,56 +638,56 @@ iran_server_configuration() {
     # Generate configuration
     cat << EOF > "${config_dir}/iran${tunnel_port}.toml"
 [server]
-bind_addr = ":${tunnel_port}"{tunnel_port}"{tunnel_port}"
-transport = "${transport}"t = "${transport}"t = "${transport}"
+bind_addr = ":${tunnel_port}"
+transport = "${transport}"
 accept_udp = ${accept_udp}
 token = "${token}"
 keepalive_period = 75
 nodelay = ${nodelay}
 channel_size = ${channel_size}
-heartbeat = ${heartbeat}eat = ${heartbeat}eat = ${heartbeat}
-mux_con = ${mux}mux_con = ${mux}mux_con = ${mux}
+heartbeat = ${heartbeat}
+mux_con = ${mux}
 mux_version = ${mux_version}
 mux_framesize = 32768
-mux_recievebuffer = 4194304evebuffer = 4194304evebuffer = 4194304
+mux_recievebuffer = 4194304
 mux_streambuffer = 2000000
 sniffer = ${sniffer}
 web_port = ${web_port}
-sniffer_log = "/root/log.json"ot/log.json"ot/log.json"
+sniffer_log = "/root/log.json"
 log_level = "info"
-proxy_protocol= ${proxy_protocol}oxy_protocol}oxy_protocol}
+proxy_protocol= ${proxy_protocol}
 tun_name = "${tun_name}"
-tun_subnet = "${tun_subnet}"et}"et}"
+tun_subnet = "${tun_subnet}"
 mtu = ${mtu}
 
 ports = [
 EOF
 
-	# Validate and process port mappingsess port mappingsess port mappings
-	for port in "${ports[@]}"; do@]}"; do@]}"; do
-	    if [[ "$port" =~ ^[0-9]+-[0-9]+$ ]]; then[0-9]+$ ]]; then[0-9]+$ ]]; then
-	        # Range of ports (e.g., 443-600)f ports (e.g., 443-600)f ports (e.g., 443-600)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml" "${config_dir}/iran${tunnel_port}.toml" "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^[0-9]+-[0-9]+:[0-9]+$ ]]; then^[0-9]+-[0-9]+:[0-9]+$ ]]; then^[0-9]+-[0-9]+:[0-9]+$ ]]; then
-	        # Port range with forwarding to a specific port (e.g., 443-600:5201)orwarding to a specific port (e.g., 443-600:5201)orwarding to a specific port (e.g., 443-600:5201)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"o "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"o "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^[0-9]+-[0-9]+=([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):[0-9]+$ ]]; then	    elif [[ "$port" =~ ^[0-9]+-[0-9]+=([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):[0-9]+$ ]]; then	    elif [[ "$port" =~ ^[0-9]+-[0-9]+=([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):[0-9]+$ ]]; then
-	        # Port range forwarding to a specific remote IP and port (e.g., 443-600=1.1.1.1:5201)# Port range forwarding to a specific remote IP and port (e.g., 443-600=1.1.1.1:5201)# Port range forwarding to a specific remote IP and port (e.g., 443-600=1.1.1.1:5201)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"      echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"      echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^[0-9]+$ ]]; then	    elif [[ "$port" =~ ^[0-9]+$ ]]; then	    elif [[ "$port" =~ ^[0-9]+$ ]]; then
-	        # Single port forwarding (e.g., 443)g., 443)g., 443)
-	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml" >> "${config_dir}/iran${tunnel_port}.toml" >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^[0-9]+=[0-9]+$ ]]; thenenen
-	        # Single port with forwarding to another port (e.g., 4000=5000) another port (e.g., 4000=5000) another port (e.g., 4000=5000)
+	# Validate and process port mappings
+	for port in "${ports[@]}"; do
+	    if [[ "$port" =~ ^[0-9]+-[0-9]+$ ]]; then
+	        # Range of ports (e.g., 443-600)
 	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):[0-9]+=[0-9]+$ ]]; then+):[0-9]+=[0-9]+$ ]]; then+):[0-9]+=[0-9]+$ ]]; then
+	    elif [[ "$port" =~ ^[0-9]+-[0-9]+:[0-9]+$ ]]; then
+	        # Port range with forwarding to a specific port (e.g., 443-600:5201)
+	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
+	    elif [[ "$port" =~ ^[0-9]+-[0-9]+=([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):[0-9]+$ ]]; then
+	        # Port range forwarding to a specific remote IP and port (e.g., 443-600=1.1.1.1:5201)
+	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
+	    elif [[ "$port" =~ ^[0-9]+$ ]]; then
+	        # Single port forwarding (e.g., 443)
+	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
+	    elif [[ "$port" =~ ^[0-9]+=[0-9]+$ ]]; then
+	        # Single port with forwarding to another port (e.g., 4000=5000)
+	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
+	    elif [[ "$port" =~ ^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):[0-9]+=[0-9]+$ ]]; then
 	        # Specific local IP with port forwarding (e.g., 127.0.0.2:443=5201)
 	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
 	    elif [[ "$port" =~ ^[0-9]+=[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$ ]]; then
-	        # Single port with forwarding to a specific remote IP and port (e.g., 443=1.1.1.1:5201)1)1)
+	        # Single port with forwarding to a specific remote IP and port (e.g., 443=1.1.1.1:5201)
 	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
-	    elif [[ "$port" =~ ^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):[0-9]+=[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$ ]]; then.[0-9]+\.[0-9]+):[0-9]+=[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$ ]]; then.[0-9]+\.[0-9]+):[0-9]+=[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$ ]]; then
-	        # Specific local IP with forwarding to a specific remote IP and port (e.g., 127.0.0.2:443=1.1.1.1:5201)to a specific remote IP and port (e.g., 127.0.0.2:443=1.1.1.1:5201)to a specific remote IP and port (e.g., 127.0.0.2:443=1.1.1.1:5201)
+	    elif [[ "$port" =~ ^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):[0-9]+=[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$ ]]; then
+	        # Specific local IP with forwarding to a specific remote IP and port (e.g., 127.0.0.2:443=1.1.1.1:5201)
 	        echo "    \"$port\"," >> "${config_dir}/iran${tunnel_port}.toml"
 	    else
 	        colorize red "[ERROR] Invalid port mapping: $port. Skipping."
@@ -706,254 +703,254 @@ EOF
 
     echo 
 
-    # Create the systemd servicethe systemd servicethe systemd service
-    cat << EOF > "${service_dir}/backhaul-iran${tunnel_port}.service" << EOF > "${service_dir}/backhaul-iran${tunnel_port}.service" << EOF > "${service_dir}/backhaul-iran${tunnel_port}.service"
-[Unit]]]
-Description=Backhaul Iran Port $tunnel_port (Iran)escription=Backhaul Iran Port $tunnel_port (Iran)escription=Backhaul Iran Port $tunnel_port (Iran)
+    # Create the systemd service
+    cat << EOF > "${service_dir}/backhaul-iran${tunnel_port}.service"
+[Unit]
+Description=Backhaul Iran Port $tunnel_port (Iran)
 After=network.target
 
-[Service]ice]ice]
-Type=simpleype=simpleype=simple
-ExecStart=${config_dir}/backhaul_premium -c ${config_dir}/iran${tunnel_port}.tomlr}/iran${tunnel_port}.tomlr}/iran${tunnel_port}.toml
-Restart=alwaysRestart=alwaysRestart=always
-RestartSec=3c=3c=3
+[Service]
+Type=simple
+ExecStart=${config_dir}/backhaul_premium -c ${config_dir}/iran${tunnel_port}.toml
+Restart=always
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-    # Reload and enable serviceble serviceble service
-    systemctl daemon-reload >/dev/null 2>&1    systemctl daemon-reload >/dev/null 2>&1    systemctl daemon-reload >/dev/null 2>&1
-    if systemctl enable --now "${service_dir}/backhaul-iran${tunnel_port}.service" >/dev/null 2>&1; thenstemctl enable --now "${service_dir}/backhaul-iran${tunnel_port}.service" >/dev/null 2>&1; thenstemctl enable --now "${service_dir}/backhaul-iran${tunnel_port}.service" >/dev/null 2>&1; then
-        colorize green "Iran service with port $tunnel_port enabled to start on boot and started."orize green "Iran service with port $tunnel_port enabled to start on boot and started."orize green "Iran service with port $tunnel_port enabled to start on boot and started."
+    # Reload and enable service
+    systemctl daemon-reload >/dev/null 2>&1
+    if systemctl enable --now "${service_dir}/backhaul-iran${tunnel_port}.service" >/dev/null 2>&1; then
+        colorize green "Iran service with port $tunnel_port enabled to start on boot and started."
     else
-        colorize red "Failed to enable service with port $tunnel_port. Please check your system configuration."ze red "Failed to enable service with port $tunnel_port. Please check your system configuration."ze red "Failed to enable service with port $tunnel_port. Please check your system configuration."
-        return 1rn 1rn 1
-    fi    fi    fi
+        colorize red "Failed to enable service with port $tunnel_port. Please check your system configuration."
+        return 1
+    fi
 
     echo
-    colorize green "IRAN server configuration completed successfully." bold colorize green "IRAN server configuration completed successfully." bold colorize green "IRAN server configuration completed successfully." bold
-}}}
+    colorize green "IRAN server configuration completed successfully." bold
+}
 
 # Function for configuring Kharej server
 kharej_server_configuration() {
     clear
-    colorize cyan "Configuring Kharej server" boldrize cyan "Configuring Kharej server" boldrize cyan "Configuring Kharej server" bold
+    colorize cyan "Configuring Kharej server" bold
     
     echo
 
-    # Prompt for IRAN server IP address    # Prompt for IRAN server IP address    # Prompt for IRAN server IP address
-    while true; doe true; doe true; do
+    # Prompt for IRAN server IP address
+    while true; do
         echo -ne "[*] IRAN server IP address [IPv4/IPv6]: "
-        read -r SERVER_ADDR       read -r SERVER_ADDR       read -r SERVER_ADDR
-        if [[ -n "$SERVER_ADDR" ]]; then        if [[ -n "$SERVER_ADDR" ]]; then        if [[ -n "$SERVER_ADDR" ]]; then
+        read -r SERVER_ADDR
+        if [[ -n "$SERVER_ADDR" ]]; then
             break
         else
-            colorize red "Server address cannot be empty. Please enter a valid address."   colorize red "Server address cannot be empty. Please enter a valid address."   colorize red "Server address cannot be empty. Please enter a valid address."
+            colorize red "Server address cannot be empty. Please enter a valid address."
             echo
-        fi    fi    fi
+        fi
     done
-            
+    
     echo
 
     # Read the tunnel port
     while true; do
         echo -ne "[*] Tunnel port: "
-        read -r tunnel_portunnel_portunnel_port
+        read -r tunnel_port
 
-        if [[ "$tunnel_port" =~ ^[0-9]+$ ]] && [ "$tunnel_port" -gt 22 ] && [ "$tunnel_port" -le 65535 ]; thenort" -le 65535 ]; thenort" -le 65535 ]; then
-            breakkk
-        elsesese
-            colorize red "Please enter a valid port number between 23 and 65535"    colorize red "Please enter a valid port number between 23 and 65535"    colorize red "Please enter a valid port number between 23 and 65535"
-            echo        echo        echo
-        fififi
-    done    done    done
+        if [[ "$tunnel_port" =~ ^[0-9]+$ ]] && [ "$tunnel_port" -gt 22 ] && [ "$tunnel_port" -le 65535 ]; then
+            break
+        else
+            colorize red "Please enter a valid port number between 23 and 65535"
+            echo
+        fi
+    done
 
     echo
 
 
-    # Initialize transport variable    # Initialize transport variable    # Initialize transport variable
+    # Initialize transport variable
     local transport=""
-    while [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; dotransport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; dotransport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; do
-        echo -ne "[*] Transport type (tcp/tcpmux/utcpmux/ws/wsmux/uwsmux/udp/tcptun/faketcptun): " -ne "[*] Transport type (tcp/tcpmux/utcpmux/ws/wsmux/uwsmux/udp/tcptun/faketcptun): " -ne "[*] Transport type (tcp/tcpmux/utcpmux/ws/wsmux/uwsmux/udp/tcptun/faketcptun): "
+    while [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; do
+        echo -ne "[*] Transport type (tcp/tcpmux/utcpmux/ws/wsmux/uwsmux/udp/tcptun/faketcptun): "
         read -r transport
 
-        if [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; then [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; then [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; then
-            colorize red "Invalid transport type. Please choose from tcp, tcpmux, utcpmux, ws, wsmux, uwsmux, udp, tcptun, faketcptun."    colorize red "Invalid transport type. Please choose from tcp, tcpmux, utcpmux, ws, wsmux, uwsmux, udp, tcptun, faketcptun."    colorize red "Invalid transport type. Please choose from tcp, tcpmux, utcpmux, ws, wsmux, uwsmux, udp, tcptun, faketcptun."
-            echo            echo            echo
-        fififi
-    done    done    done
+        if [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; then
+            colorize red "Invalid transport type. Please choose from tcp, tcpmux, utcpmux, ws, wsmux, uwsmux, udp, tcptun, faketcptun."
+            echo
+        fi
+    done
 
     # TUN Device Name 
-    local tun_name="backhaul"ckhaul"ckhaul"
+    local tun_name="backhaul"
     if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
         echo
         while true; do
-            echo -ne "[-] TUN Device Name (default backhaul): "            echo -ne "[-] TUN Device Name (default backhaul): "            echo -ne "[-] TUN Device Name (default backhaul): "
+            echo -ne "[-] TUN Device Name (default backhaul): "
             read -r tun_name
 
-            if [[ -z "$tun_name" ]]; then[ -z "$tun_name" ]]; then[ -z "$tun_name" ]]; then
-                tun_name="backhaul"      tun_name="backhaul"      tun_name="backhaul"
-            fi    fi    fi
+            if [[ -z "$tun_name" ]]; then
+                tun_name="backhaul"
+            fi
 
-            if [[ "$tun_name" =~ ^[a-zA-Z0-9]+$ ]]; thenn_name" =~ ^[a-zA-Z0-9]+$ ]]; thenn_name" =~ ^[a-zA-Z0-9]+$ ]]; then
+            if [[ "$tun_name" =~ ^[a-zA-Z0-9]+$ ]]; then
                 echo
                 break
-            elseelseelse
-                colorize red "Please enter a valid TUN device name."ze red "Please enter a valid TUN device name."ze red "Please enter a valid TUN device name."
+            else
+                colorize red "Please enter a valid TUN device name."
                 echo
             fi
-        done        done        done
+        done
     fi
 
-    # TUN Subnetetet
-    local tun_subnet="10.10.10.0/24"    local tun_subnet="10.10.10.0/24"    local tun_subnet="10.10.10.0/24"
-    if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; thenaketcptun" ]]; thenaketcptun" ]]; then
-        while true; dododo
-            echo -ne "[-] TUN Subnet (default 10.10.10.0/24): ""[-] TUN Subnet (default 10.10.10.0/24): ""[-] TUN Subnet (default 10.10.10.0/24): "
-            read -r tun_subnet -r tun_subnet -r tun_subnet
+    # TUN Subnet
+    local tun_subnet="10.10.10.0/24"
+    if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
+        while true; do
+            echo -ne "[-] TUN Subnet (default 10.10.10.0/24): "
+            read -r tun_subnet
 
-            # Set default value if input is emptyfault value if input is emptyfault value if input is empty
-            if [[ -z "$tun_subnet" ]]; then [[ -z "$tun_subnet" ]]; then [[ -z "$tun_subnet" ]]; then
-                tun_subnet="10.10.10.0/24"    tun_subnet="10.10.10.0/24"    tun_subnet="10.10.10.0/24"
-            fi      fi      fi
+            # Set default value if input is empty
+            if [[ -z "$tun_subnet" ]]; then
+                tun_subnet="10.10.10.0/24"
+            fi
 
-            # Validate TUN subnet (CIDR notation)lidate TUN subnet (CIDR notation)lidate TUN subnet (CIDR notation)
-            if [[ "$tun_subnet" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]{1,2}$ ]]; then[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]{1,2}$ ]]; then[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]{1,2}$ ]]; then
+            # Validate TUN subnet (CIDR notation)
+            if [[ "$tun_subnet" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]{1,2}$ ]]; then
                 # Validate IP and subnet mask
-                IFS='/' read -r ip subnet <<< "$tun_subnet"' read -r ip subnet <<< "$tun_subnet"' read -r ip subnet <<< "$tun_subnet"
-                if [[ "$subnet" -le 32 && "$subnet" -ge 1 ]]; thenhenhen
-                    IFS='.' read -r a b c d <<< "$ip"ad -r a b c d <<< "$ip"ad -r a b c d <<< "$ip"
-                    if [[ "$a" -le 255 && "$b" -le 255 && "$c" -le 255 && "$d" -le 255 ]]; then                    if [[ "$a" -le 255 && "$b" -le 255 && "$c" -le 255 && "$d" -le 255 ]]; then                    if [[ "$a" -le 255 && "$b" -le 255 && "$c" -le 255 && "$d" -le 255 ]]; then
+                IFS='/' read -r ip subnet <<< "$tun_subnet"
+                if [[ "$subnet" -le 32 && "$subnet" -ge 1 ]]; then
+                    IFS='.' read -r a b c d <<< "$ip"
+                    if [[ "$a" -le 255 && "$b" -le 255 && "$c" -le 255 && "$d" -le 255 ]]; then
                         echo
                         break
                     fi
-                fi  fi  fi
-            fi            fi            fi
+                fi
+            fi
 
-            colorize red "Please enter a valid subnet in CIDR notation (e.g., 10.10.10.0/24)."10.0/24)."10.0/24)."
+            colorize red "Please enter a valid subnet in CIDR notation (e.g., 10.10.10.0/24)."
             echo
         done
     fi
 
     # TUN MTU
     local mtu="1500"    
-    if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; thenptun" || "$transport" == "faketcptun" ]]; thenptun" || "$transport" == "faketcptun" ]]; then
+    if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
         while true; do
-            echo -ne "[-] TUN MTU (default 1500): "ne "[-] TUN MTU (default 1500): "ne "[-] TUN MTU (default 1500): "
-            read -r mtuad -r mtuad -r mtu
+            echo -ne "[-] TUN MTU (default 1500): "
+            read -r mtu
 
             # Set default value if input is empty
-            if [[ -z "$mtu" ]]; then[ -z "$mtu" ]]; then[ -z "$mtu" ]]; then
-                mtu=1500    mtu=1500    mtu=1500
-            fi      fi      fi
+            if [[ -z "$mtu" ]]; then
+                mtu=1500
+            fi
 
-            # Validate MTU value Validate MTU value Validate MTU value
-            if [[ "$mtu" =~ ^[0-9]+$ ]] && [ "$mtu" -ge 576 ] && [ "$mtu" -le 9000 ]; then =~ ^[0-9]+$ ]] && [ "$mtu" -ge 576 ] && [ "$mtu" -le 9000 ]; then =~ ^[0-9]+$ ]] && [ "$mtu" -ge 576 ] && [ "$mtu" -le 9000 ]; then
+            # Validate MTU value
+            if [[ "$mtu" =~ ^[0-9]+$ ]] && [ "$mtu" -ge 576 ] && [ "$mtu" -le 9000 ]; then
                 break
             fi
 
-            colorize red "Please enter a valid MTU value between 576 and 9000."d "Please enter a valid MTU value between 576 and 9000."d "Please enter a valid MTU value between 576 and 9000."
-            echo            echo            echo
+            colorize red "Please enter a valid MTU value between 576 and 9000."
+            echo
         done
     fi
     
 
-    # Edge IP    # Edge IP    # Edge IP
-    if [[ "$transport" =~ ^(ws|wsmux|uwsmux)$ ]]; thensmux|uwsmux)$ ]]; thensmux|uwsmux)$ ]]; then
+    # Edge IP
+    if [[ "$transport" =~ ^(ws|wsmux|uwsmux)$ ]]; then
         while true; do
             echo
-            echo -ne "[-] Edge IP/Domain (optional)(press enter to disable): "ho -ne "[-] Edge IP/Domain (optional)(press enter to disable): "ho -ne "[-] Edge IP/Domain (optional)(press enter to disable): "
-            read -r edge_ip            read -r edge_ip            read -r edge_ip
+            echo -ne "[-] Edge IP/Domain (optional)(press enter to disable): "
+            read -r edge_ip
     
-            # Set default if input is emptyt default if input is emptyt default if input is empty
-            if [[ -z "$edge_ip" ]]; thenif [[ -z "$edge_ip" ]]; thenif [[ -z "$edge_ip" ]]; then
-                edge_ip="#edge_ip = \"188.114.96.0\""          edge_ip="#edge_ip = \"188.114.96.0\""          edge_ip="#edge_ip = \"188.114.96.0\""
-                break            break            break
-            fi            fi            fi
+            # Set default if input is empty
+            if [[ -z "$edge_ip" ]]; then
+                edge_ip="#edge_ip = \"188.114.96.0\""
+                break
+            fi
     
             # format the edge_ip variable
-            edge_ip="edge_ip = \"$edge_ip\""dge_ip = \"$edge_ip\""dge_ip = \"$edge_ip\""
-            breakkk
+            edge_ip="edge_ip = \"$edge_ip\""
+            break
         done
     else
-        edge_ip="#edge_ip = \"188.114.96.0\""    edge_ip="#edge_ip = \"188.114.96.0\""    edge_ip="#edge_ip = \"188.114.96.0\""
+        edge_ip="#edge_ip = \"188.114.96.0\""
     fi
     
     echo
 
-    # Security Token Token Token
-    echo -ne "[-] Security Token (press enter to use default value): "echo -ne "[-] Security Token (press enter to use default value): "echo -ne "[-] Security Token (press enter to use default value): "
+    # Security Token
+    echo -ne "[-] Security Token (press enter to use default value): "
     read -r token
     token="${token:-your_token}"
 
-    # Enable TCP_NODELAY TCP_NODELAY TCP_NODELAY
-    local nodelay=""l nodelay=""l nodelay=""
+    # Enable TCP_NODELAY
+    local nodelay=""
     
-    # Check transport typeCheck transport typeCheck transport type
-    if [[ "$transport" == "udp" ]]; thenif [[ "$transport" == "udp" ]]; thenif [[ "$transport" == "udp" ]]; then
-        nodelay=falsenodelay=falsenodelay=false
-    else    else    else
+    # Check transport type
+    if [[ "$transport" == "udp" ]]; then
+        nodelay=false
+    else
         echo
         while [[ "$nodelay" != "true" && "$nodelay" != "false" ]]; do
-            echo -ne "[-] Enable TCP_NODELAY (true/false)(default true): "-ne "[-] Enable TCP_NODELAY (true/false)(default true): "-ne "[-] Enable TCP_NODELAY (true/false)(default true): "
+            echo -ne "[-] Enable TCP_NODELAY (true/false)(default true): "
             read -r nodelay
-                                    
-            if [[ -z "$nodelay" ]]; thenodelay" ]]; thenodelay" ]]; then
-                nodelay=truelay=truelay=true
-            fi        fi        fi
+            
+            if [[ -z "$nodelay" ]]; then
+                nodelay=true
+            fi
         
         
-            if [[ "$nodelay" != "true" && "$nodelay" != "false" ]]; thenodelay" != "true" && "$nodelay" != "false" ]]; thenodelay" != "true" && "$nodelay" != "false" ]]; then
-                colorize red "Invalid input. Please enter 'true' or 'false'."        colorize red "Invalid input. Please enter 'true' or 'false'."        colorize red "Invalid input. Please enter 'true' or 'false'."
-                echo    echo    echo
+            if [[ "$nodelay" != "true" && "$nodelay" != "false" ]]; then
+                colorize red "Invalid input. Please enter 'true' or 'false'."
+                echo
             fi
         done
     fi
 
 	    
     # Connection Pool
-    local pool=8=8=8
-    if [[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; then[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; then[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; then
-    	echo o o 
+    local pool=8
+    if [[ "$transport" != "tcptun" && "$transport" != "faketcptun" ]]; then
+    	echo 
         while true; do
             echo -ne "[-] Connection Pool (default 8): "
-            read -r poolpoolpool
+            read -r pool
 
-            if [[ -z "$pool" ]]; thenif [[ -z "$pool" ]]; thenif [[ -z "$pool" ]]; then
-                pool=8          pool=8          pool=8
-            fi            fi            fi
-                          
+            if [[ -z "$pool" ]]; then
+                pool=8
+            fi
             
-            if [[ "$pool" =~ ^[0-9]+$ ]] && [ "$pool" -gt 1 ] && [ "$pool" -le 1024 ]; then[ "$pool" =~ ^[0-9]+$ ]] && [ "$pool" -gt 1 ] && [ "$pool" -le 1024 ]; then[ "$pool" =~ ^[0-9]+$ ]] && [ "$pool" -gt 1 ] && [ "$pool" -le 1024 ]; then
+            
+            if [[ "$pool" =~ ^[0-9]+$ ]] && [ "$pool" -gt 1 ] && [ "$pool" -le 1024 ]; then
                 break
-            else  else  else
-                colorize red "Please enter a valid connection pool between 1 and 1024."ze red "Please enter a valid connection pool between 1 and 1024."ze red "Please enter a valid connection pool between 1 and 1024."
+            else
+                colorize red "Please enter a valid connection pool between 1 and 1024."
                 echo
             fi
-        done        done        done
+        done
     fi
 
 
-    # Mux Versionrsionrsion
-    if [[ "$transport" =~ ^(tcpmux|wsmux|utcpmux|uwsmux)$ ]]; thentransport" =~ ^(tcpmux|wsmux|utcpmux|uwsmux)$ ]]; thentransport" =~ ^(tcpmux|wsmux|utcpmux|uwsmux)$ ]]; then
+    # Mux Version
+    if [[ "$transport" =~ ^(tcpmux|wsmux|utcpmux|uwsmux)$ ]]; then
         while true; do
             echo 
-            echo -ne "[-] Mux Version (1 or 2) (default 2): " -ne "[-] Mux Version (1 or 2) (default 2): " -ne "[-] Mux Version (1 or 2) (default 2): "
+            echo -ne "[-] Mux Version (1 or 2) (default 2): "
             read -r mux_version
     
-            # Set default to 1 if input is emptySet default to 1 if input is emptySet default to 1 if input is empty
-            if [[ -z "$mux_version" ]]; thenif [[ -z "$mux_version" ]]; thenif [[ -z "$mux_version" ]]; then
-                mux_version=2          mux_version=2          mux_version=2
-            fi            fi            fi
-                                    
-            # Validate the input for version 1 or 2idate the input for version 1 or 2idate the input for version 1 or 2
-            if [[ "$mux_version" =~ ^[0-9]+$ ]] && [ "$mux_version" -ge 1 ] && [ "$mux_version" -le 2 ]; then" -ge 1 ] && [ "$mux_version" -le 2 ]; then" -ge 1 ] && [ "$mux_version" -le 2 ]; then
+            # Set default to 1 if input is empty
+            if [[ -z "$mux_version" ]]; then
+                mux_version=2
+            fi
+            
+            # Validate the input for version 1 or 2
+            if [[ "$mux_version" =~ ^[0-9]+$ ]] && [ "$mux_version" -ge 1 ] && [ "$mux_version" -le 2 ]; then
                 break
             else
-                colorize red "Please enter a valid mux version: 1 or 2."n: 1 or 2."n: 1 or 2."
+                colorize red "Please enter a valid mux version: 1 or 2."
                 echo
-            fi        fi        fi
+            fi
         done
     else
         mux_version=2
@@ -962,17 +959,17 @@ kharej_server_configuration() {
     echo
     
 	# Enable Sniffer
-    local sniffer=""r=""r=""
+    local sniffer=""
     while [[ "$sniffer" != "true" && "$sniffer" != "false" ]]; do
-        echo -ne "[-] Enable Sniffer (true/false)(default false): "] Enable Sniffer (true/false)(default false): "] Enable Sniffer (true/false)(default false): "
-        read -r snifferr snifferr sniffer
+        echo -ne "[-] Enable Sniffer (true/false)(default false): "
+        read -r sniffer
         
-        if [[ -z "$sniffer" ]]; thenif [[ -z "$sniffer" ]]; thenif [[ -z "$sniffer" ]]; then
-            sniffer=falsealsealse
-        fi  fi  fi
-                            
-        if [[ "$sniffer" != "true" && "$sniffer" != "false" ]]; thenif [[ "$sniffer" != "true" && "$sniffer" != "false" ]]; thenif [[ "$sniffer" != "true" && "$sniffer" != "false" ]]; then
-            colorize red "Invalid input. Please enter 'true' or 'false'."        colorize red "Invalid input. Please enter 'true' or 'false'."        colorize red "Invalid input. Please enter 'true' or 'false'."
+        if [[ -z "$sniffer" ]]; then
+            sniffer=false
+        fi
+            
+        if [[ "$sniffer" != "true" && "$sniffer" != "false" ]]; then
+            colorize red "Invalid input. Please enter 'true' or 'false'."
             echo
         fi
     done
@@ -981,114 +978,114 @@ kharej_server_configuration() {
 	
     # Get Web Port
 	local web_port=""
-	while true; doe; doe; do
-	    echo -ne "[-] Enter Web Port (default 0 to disable): "e "[-] Enter Web Port (default 0 to disable): "e "[-] Enter Web Port (default 0 to disable): "
+	while true; do
+	    echo -ne "[-] Enter Web Port (default 0 to disable): "
 	    read -r web_port
 
-        if [[ -z "$web_port" ]]; then "$web_port" ]]; then "$web_port" ]]; then
-            web_port=0  web_port=0  web_port=0
-        fififi
-                      
-	    if [[ "$web_port" == "0" ]]; thenf [[ "$web_port" == "0" ]]; thenf [[ "$web_port" == "0" ]]; then
-	        break        break        break
-	    elif [[ "$web_port" =~ ^[0-9]+$ ]] && ((web_port >= 23 && web_port <= 65535)); then_port" =~ ^[0-9]+$ ]] && ((web_port >= 23 && web_port <= 65535)); then_port" =~ ^[0-9]+$ ]] && ((web_port >= 23 && web_port <= 65535)); then
-	        if check_port "$web_port" "tcp"; thenport "$web_port" "tcp"; thenport "$web_port" "tcp"; then
-	            colorize red "Port $web_port is already in use. Please choose a different port."lorize red "Port $web_port is already in use. Please choose a different port."lorize red "Port $web_port is already in use. Please choose a different port."
+        if [[ -z "$web_port" ]]; then
+            web_port=0
+        fi
+        
+	    if [[ "$web_port" == "0" ]]; then
+	        break
+	    elif [[ "$web_port" =~ ^[0-9]+$ ]] && ((web_port >= 23 && web_port <= 65535)); then
+	        if check_port "$web_port" "tcp"; then
+	            colorize red "Port $web_port is already in use. Please choose a different port."
 	            echo
 	        else
-	            break	            break	            break
+	            break
 	        fi
 	    else
-	        colorize red "Invalid port. Please enter a number between 22 and 65535, or 0 to disable."olorize red "Invalid port. Please enter a number between 22 and 65535, or 0 to disable."olorize red "Invalid port. Please enter a number between 22 and 65535, or 0 to disable."
-	        echo echo echo
+	        colorize red "Invalid port. Please enter a number between 22 and 65535, or 0 to disable."
+	        echo
 	    fi
 	done
 
     
 
     # IP Limit 
-    if [[ ! "$transport" =~ ^(ws|udp|tcptun|faketcptun)$ ]]; then$transport" =~ ^(ws|udp|tcptun|faketcptun)$ ]]; then$transport" =~ ^(ws|udp|tcptun|faketcptun)$ ]]; then
-        # Enable IP LimitP LimitP Limit
-        local ip_limit=""al ip_limit=""al ip_limit=""
-        while [[ "$ip_limit" != "true" && "$ip_limit" != "false" ]]; dohile [[ "$ip_limit" != "true" && "$ip_limit" != "false" ]]; dohile [[ "$ip_limit" != "true" && "$ip_limit" != "false" ]]; do
+    if [[ ! "$transport" =~ ^(ws|udp|tcptun|faketcptun)$ ]]; then
+        # Enable IP Limit
+        local ip_limit=""
+        while [[ "$ip_limit" != "true" && "$ip_limit" != "false" ]]; do
             echo
-            echo -ne "[-] Enable IP Limit for X-UI Panel (true/false)(default false): "cho -ne "[-] Enable IP Limit for X-UI Panel (true/false)(default false): "cho -ne "[-] Enable IP Limit for X-UI Panel (true/false)(default false): "
-            read -r ip_limit     read -r ip_limit     read -r ip_limit
-                          
-            if [[ -z "$ip_limit" ]]; then            if [[ -z "$ip_limit" ]]; then            if [[ -z "$ip_limit" ]]; then
-                ip_limit=false            ip_limit=false            ip_limit=false
-            fi            fi            fi
-                  
-            if [[ "$ip_limit" != "true" && "$ip_limit" != "false" ]]; then ]]; then ]]; then
-                colorize red "Invalid input. Please enter 'true' or 'false'."red "Invalid input. Please enter 'true' or 'false'."red "Invalid input. Please enter 'true' or 'false'."
+            echo -ne "[-] Enable IP Limit for X-UI Panel (true/false)(default false): "
+            read -r ip_limit
+            
+            if [[ -z "$ip_limit" ]]; then
+                ip_limit=false
+            fi
+                
+            if [[ "$ip_limit" != "true" && "$ip_limit" != "false" ]]; then
+                colorize red "Invalid input. Please enter 'true' or 'false'."
                 echo
             fi
         done
     else
-	    # Automatically set proxy_protocol to false for ws and udpxy_protocol to false for ws and udpxy_protocol to false for ws and udp
-	    ip_limit="false"t="false"t="false"
+	    # Automatically set proxy_protocol to false for ws and udp
+	    ip_limit="false"
 	fi
 
 
-    # Generate client configuration filelient configuration filelient configuration file
+    # Generate client configuration file
     cat << EOF > "${config_dir}/kharej${tunnel_port}.toml"
 [client]
-remote_addr = "${SERVER_ADDR}:${tunnel_port}"VER_ADDR}:${tunnel_port}"VER_ADDR}:${tunnel_port}"
+remote_addr = "${SERVER_ADDR}:${tunnel_port}"
 ${edge_ip}
-transport = "${transport}""${transport}""${transport}"
-token = "${token}""${token}""${token}"
+transport = "${transport}"
+token = "${token}"
 connection_pool = ${pool}
-aggressive_pool = falsesese
-keepalive_period = 75palive_period = 75palive_period = 75
-nodelay = ${nodelay}nodelay = ${nodelay}nodelay = ${nodelay}
-retry_interval = 3retry_interval = 3retry_interval = 3
+aggressive_pool = false
+keepalive_period = 75
+nodelay = ${nodelay}
+retry_interval = 3
 dial_timeout = 10
 mux_version = ${mux_version}
-mux_framesize = 32768esize = 32768esize = 32768
+mux_framesize = 32768
 mux_recievebuffer = 4194304
-mux_streambuffer = 2000000buffer = 2000000buffer = 2000000
+mux_streambuffer = 2000000
 sniffer = ${sniffer}
-web_port = ${web_port}ort}ort}
-sniffer_log = "/root/log.json"json"json"
+web_port = ${web_port}
+sniffer_log = "/root/log.json"
 log_level = "info"
 ip_limit= ${ip_limit}
-tun_name = "${tun_name}"me}"me}"
-tun_subnet = "${tun_subnet}"n_subnet}"n_subnet}"
+tun_name = "${tun_name}"
+tun_subnet = "${tun_subnet}"
 mtu = ${mtu}
 EOF
 
 
     echo
 
-    # Create the systemd service unit filemd service unit filemd service unit file
-    cat << EOF > "${service_dir}/backhaul-kharej${tunnel_port}.service"r}/backhaul-kharej${tunnel_port}.service"r}/backhaul-kharej${tunnel_port}.service"
+    # Create the systemd service unit file
+    cat << EOF > "${service_dir}/backhaul-kharej${tunnel_port}.service"
 [Unit]
-Description=Backhaul Kharej Port $tunnel_portKharej Port $tunnel_portKharej Port $tunnel_port
+Description=Backhaul Kharej Port $tunnel_port
 After=network.target
 
 [Service]
-Type=simplee=simplee=simple
-ExecStart=${config_dir}/backhaul_premium -c ${config_dir}/kharej${tunnel_port}.tomlExecStart=${config_dir}/backhaul_premium -c ${config_dir}/kharej${tunnel_port}.tomlExecStart=${config_dir}/backhaul_premium -c ${config_dir}/kharej${tunnel_port}.toml
-Restart=alwaysRestart=alwaysRestart=always
-RestartSec=3ec=3ec=3
+Type=simple
+ExecStart=${config_dir}/backhaul_premium -c ${config_dir}/kharej${tunnel_port}.toml
+Restart=always
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-    # Reload systemd to apply new service to apply new service to apply new service
-    systemctl daemon-reload >/dev/null 2>&1    systemctl daemon-reload >/dev/null 2>&1    systemctl daemon-reload >/dev/null 2>&1
+    # Reload systemd to apply new service
+    systemctl daemon-reload >/dev/null 2>&1
 
-    # Enable and start the servicee and start the servicee and start the service
-    if systemctl enable --now "${service_dir}/backhaul-kharej${tunnel_port}.service" >/dev/null 2>&1; then" >/dev/null 2>&1; then" >/dev/null 2>&1; then
-        colorize green "Kharej service with port $tunnel_port enabled to start on boot and started."ze green "Kharej service with port $tunnel_port enabled to start on boot and started."ze green "Kharej service with port $tunnel_port enabled to start on boot and started."
+    # Enable and start the service
+    if systemctl enable --now "${service_dir}/backhaul-kharej${tunnel_port}.service" >/dev/null 2>&1; then
+        colorize green "Kharej service with port $tunnel_port enabled to start on boot and started."
     else
-        colorize red "Failed to enable service with port $tunnel_port. Please check your system configuration."        colorize red "Failed to enable service with port $tunnel_port. Please check your system configuration."        colorize red "Failed to enable service with port $tunnel_port. Please check your system configuration."
-        return 1eturn 1eturn 1
+        colorize red "Failed to enable service with port $tunnel_port. Please check your system configuration."
+        return 1
     fi
 
-    echo    echo    echo
-    colorize green "Kharej server configuration completed successfully." boldration completed successfully." boldration completed successfully." bold
+    echo
+    colorize green "Kharej server configuration completed successfully." bold
 }
 
 
@@ -1096,29 +1093,29 @@ EOF
 remove_core(){
 	echo
 	# If user try to remove core and still a service is running, we should prohibit this.	
-	# Check if any .toml file exists.toml file exists.toml file exists
-	if find "$config_dir" -type f -name "*.toml" | grep -q .; thennd "$config_dir" -type f -name "*.toml" | grep -q .; thennd "$config_dir" -type f -name "*.toml" | grep -q .; then
-	    colorize red "You should delete all services first and then delete the Backhaul-Core."	    colorize red "You should delete all services first and then delete the Backhaul-Core."	    colorize red "You should delete all services first and then delete the Backhaul-Core."
-	    sleep 3ep 3ep 3
+	# Check if any .toml file exists
+	if find "$config_dir" -type f -name "*.toml" | grep -q .; then
+	    colorize red "You should delete all services first and then delete the Backhaul-Core."
+	    sleep 3
 	    return 1
-	elseelseelse
-	    colorize cyan "No .toml file found in the directory."	    colorize cyan "No .toml file found in the directory."	    colorize cyan "No .toml file found in the directory."
-	fi	fi	fi
+	else
+	    colorize cyan "No .toml file found in the directory."
+	fi
 
 	echo
 	
 	# Prompt to confirm before removing Backhaul-core directory
-	colorize yellow "Do you want to remove Backhaul-Core? (y/n)"remove Backhaul-Core? (y/n)"remove Backhaul-Core? (y/n)"
+	colorize yellow "Do you want to remove Backhaul-Core? (y/n)"
     read -r confirm
 	echo     
-	if [[ $confirm == [yY] ]]; thenirm == [yY] ]]; thenirm == [yY] ]]; then
-	    if [[ -d "$config_dir" ]]; then "$config_dir" ]]; then "$config_dir" ]]; then
-	        rm -rf "$config_dir" >/dev/null 2>&1    rm -rf "$config_dir" >/dev/null 2>&1    rm -rf "$config_dir" >/dev/null 2>&1
-	        colorize green "Backhaul-Core directory removed." bold bold bold
-	    else  else  else
-	        colorize red "Backhaul-Core directory not found." bold	        colorize red "Backhaul-Core directory not found." bold	        colorize red "Backhaul-Core directory not found." bold
-	    fififi
-	elseelseelse
+	if [[ $confirm == [yY] ]]; then
+	    if [[ -d "$config_dir" ]]; then
+	        rm -rf "$config_dir" >/dev/null 2>&1
+	        colorize green "Backhaul-Core directory removed." bold
+	    else
+	        colorize red "Backhaul-Core directory not found." bold
+	    fi
+	else
 	    colorize yellow "Backhaul-Core removal canceled."
 	fi
 	
@@ -1127,164 +1124,595 @@ remove_core(){
 }
 
 # Function for checking tunnel status
-check_tunnel_status() {nel_status() {nel_status() {
+check_tunnel_status() {
     echo
     
-	# Check for .toml fileseck for .toml fileseck for .toml files
+	# Check for .toml files
 	if ! ls "$config_dir"/*.toml 1> /dev/null 2>&1; then
-	    colorize red "No config files found in the Backhaul directory." bold  colorize red "No config files found in the Backhaul directory." bold  colorize red "No config files found in the Backhaul directory." bold
-	    echo     echo     echo 
-	    press_keypress_keypress_key
-	    return 1n 1n 1
-	fififi
+	    colorize red "No config files found in the Backhaul directory." bold
+	    echo 
+	    press_key
+	    return 1
+	fi
 
 	clear
-    colorize yellow "Checking all services status..." boldecking all services status..." boldecking all services status..." bold
-    sleep 1p 1p 1
-    echoechoecho
-    for config_path in "$config_dir"/iran*.toml; do$config_dir"/iran*.toml; do$config_dir"/iran*.toml; do
+    colorize yellow "Checking all services status..." bold
+    sleep 1
+    echo
+    for config_path in "$config_dir"/iran*.toml; do
         if [ -f "$config_path" ]; then
-            # Extract config_name without directory path and change it to service name service name service name
-			config_name=$(basename "$config_path")name=$(basename "$config_path")name=$(basename "$config_path")
-			config_name="${config_name%.toml}"="${config_name%.toml}"="${config_name%.toml}"
-			service_name="backhaul-${config_name}.service"me="backhaul-${config_name}.service"me="backhaul-${config_name}.service"
-            config_port="${config_name#iran}"         config_port="${config_name#iran}"         config_port="${config_name#iran}"
-                                    
-			# Check if the Backhaul-client-kharej service is activeheck if the Backhaul-client-kharej service is activeheck if the Backhaul-client-kharej service is active
+            # Extract config_name without directory path and change it to service name
+			config_name=$(basename "$config_path")
+			config_name="${config_name%.toml}"
+			service_name="backhaul-${config_name}.service"
+            config_port="${config_name#iran}"
+            
+			# Check if the Backhaul-client-kharej service is active
 			if systemctl is-active --quiet "$service_name"; then
-				colorize green "Iran service with tunnel port $config_port is running"e green "Iran service with tunnel port $config_port is running"e green "Iran service with tunnel port $config_port is running"
+				colorize green "Iran service with tunnel port $config_port is running"
 			else
-				colorize red "Iran service with tunnel port $config_port is not running"nfig_port is not running"nfig_port is not running"
+				colorize red "Iran service with tunnel port $config_port is not running"
 			fi
    		fi
     done
     
-    for config_path in "$config_dir"/kharej*.toml; do; do; do
+    for config_path in "$config_dir"/kharej*.toml; do
         if [ -f "$config_path" ]; then
-            # Extract config_name without directory path and change it to service name# Extract config_name without directory path and change it to service name# Extract config_name without directory path and change it to service name
+            # Extract config_name without directory path and change it to service name
 			config_name=$(basename "$config_path")
 			config_name="${config_name%.toml}"
 			service_name="backhaul-${config_name}.service"
-            config_port="${config_name#kharej}"     config_port="${config_name#kharej}"     config_port="${config_name#kharej}"
+            config_port="${config_name#kharej}"
             
-			# Check if the Backhaul-client-kharej service is active           send_email_notification "Tunnel Down: $service_name" "The tunnel $service_name is not running. Please check the logs."Check if the Backhaul-client-kharej service is activeCheck if the Backhaul-client-kharej service is active
-			if systemctl is-active --quiet "$service_name"; thentemctl is-active --quiet "$service_name"; thenystemctl is-active --quiet "$service_name"; then
-				colorize green "Kharej service with tunnel port $config_port is running"ize green "Kharej service with tunnel port $config_port is running"rize green "Kharej service with tunnel port $config_port is running"
-			elsedonelselse
-				colorize red "Kharej service with tunnel port $config_port is not running""
-			fiharej*.toml; do
+			# Check if the Backhaul-client-kharej service is active
+			if systemctl is-active --quiet "$service_name"; then
+				colorize green "Kharej service with tunnel port $config_port is running"
+			else
+				colorize red "Kharej service with tunnel port $config_port is not running"
+			fi
    		fi
-    done directory path and change it to service name
-    th")
+    done
     
-    echoe"
-    press_keyconfig_port="${config_name#kharej}"yy
+    
+    echo
+    press_key
 }
-ive
 
-orize green "Kharej service with tunnel port $config_port is running"
+
+
 # Function for destroying tunnel
-tunnel_management() {olorize red "Kharej service with tunnel port $config_port is not running"l_management() {l_management() {
-	echo         send_email_notification "Tunnel Down: $service_name" "The tunnel $service_name is not running. Please check the logs."
-	# Check for .toml filesr .toml files for .toml files
-	if ! ls "$config_dir"/*.toml 1> /dev/null 2>&1; then	fi! ls "$config_dir"/*.toml 1> /dev/null 2>&1; then! ls "$config_dir"/*.toml 1> /dev/null 2>&1; then
-	    colorize red "No config files found in the Backhaul directory." bolddone colorize red "No config files found in the Backhaul directory." bold colorize red "No config files found in the Backhaul directory." bold
+tunnel_management() {
+	echo
+	# Check for .toml files
+	if ! ls "$config_dir"/*.toml 1> /dev/null 2>&1; then
+	    colorize red "No config files found in the Backhaul directory." bold
 	    echo 
 	    press_key
-	    return 1   echo    return 1    return 1
-	fi    press_key	fi	fi
-	}		
-	clear	clear	clear
-	colorize cyan "List of existing services to manage:" boldces to manage:" bold
+	    return 1
+	fi
+	
+	clear
+	colorize cyan "List of existing services to manage:" bold
 	echo 
-	ction for destroying tunnel
+	
 	#Variables
     local index=1
     declare -a configs
-$config_dir"/*.toml 1> /dev/null 2>&1; then
-    for config_path in "$config_dir"/iran*.toml; dored "No config files found in the Backhaul directory." bold_path in "$config_dir"/iran*.toml; do_path in "$config_dir"/iran*.toml; do
-        if [ -f "$config_path" ]; then"$config_path" ]; then-f "$config_path" ]; then
-            # Extract config_name without directory path  press_key         # Extract config_name without directory path         # Extract config_name without directory path
-            config_name=$(basename "$config_path")    return 1           config_name=$(basename "$config_path")           config_name=$(basename "$config_path")
-                     
-            # Remove "iran" prefix and ".toml" suffix
-            config_port="${config_name#iran}"      config_port="${config_name#iran}"      config_port="${config_name#iran}"
-            config_port="${config_port%.toml}"colorize cyan "List of existing services to manage:" bold           config_port="${config_port%.toml}"           config_port="${config_port%.toml}"
+
+    for config_path in "$config_dir"/iran*.toml; do
+        if [ -f "$config_path" ]; then
+            # Extract config_name without directory path
+            config_name=$(basename "$config_path")
             
-            configs+=("$config_path")th")gs+=("$config_path")
-            echo -e "${MAGENTA}${index}${NC}) ${GREEN}Iran${NC} service, Tunnel port: ${YELLOW}$config_port${NC}"index}${NC}) ${GREEN}Iran${NC} service, Tunnel port: ${YELLOW}$config_port${NC}"{MAGENTA}${index}${NC}) ${GREEN}Iran${NC} service, Tunnel port: ${YELLOW}$config_port${NC}"
-            ((index++))    local index=1            ((index++))            ((index++))
+            # Remove "iran" prefix and ".toml" suffix
+            config_port="${config_name#iran}"
+            config_port="${config_port%.toml}"
+            
+            configs+=("$config_path")
+            echo -e "${MAGENTA}${index}${NC}) ${GREEN}Iran${NC} service, Tunnel port: ${YELLOW}$config_port${NC}"
+            ((index++))
         fi
     done
     
 
-    # Extract config_name without directory path
+    
     for config_path in "$config_dir"/kharej*.toml; do
         if [ -f "$config_path" ]; then
-            # Extract config_name without directory path suffixctory pathctory path
-            config_name=$(basename "$config_path")config_port="${config_name#iran}"config_name=$(basename "$config_path")config_name=$(basename "$config_path")
-            t%.toml}"
+            # Extract config_name without directory path
+            config_name=$(basename "$config_path")
+            
             # Remove "kharej" prefix and ".toml" suffix
-            config_port="${config_name#kharej}"$config_path")="${config_name#kharej}"="${config_name#kharej}"
-            config_port="${config_port%.toml}"  echo -e "${MAGENTA}${index}${NC}) ${GREEN}Iran${NC} service, Tunnel port: ${YELLOW}$config_port${NC}"  config_port="${config_port%.toml}"  config_port="${config_port%.toml}"
-                ((index++))        
-            configs+=("$config_path")    fi        configs+=("$config_path")        configs+=("$config_path")
-            echo -e "${MAGENTA}${index}${NC}) ${GREEN}Kharej${NC} service, Tunnel port: ${YELLOW}$config_port${NC}"    done            echo -e "${MAGENTA}${index}${NC}) ${GREEN}Kharej${NC} service, Tunnel port: ${YELLOW}$config_port${NC}"            echo -e "${MAGENTA}${index}${NC}) ${GREEN}Kharej${NC} service, Tunnel port: ${YELLOW}$config_port${NC}"
-            ((index++))        ((index++))        ((index++))
+            config_port="${config_name#kharej}"
+            config_port="${config_port%.toml}"
+            
+            configs+=("$config_path")
+            echo -e "${MAGENTA}${index}${NC}) ${GREEN}Kharej${NC} service, Tunnel port: ${YELLOW}$config_port${NC}"
+            ((index++))
         fi
     done
     
     echo
-    colorize cyan "Additional options:" bold# Extract config_name without directory path cyan "Additional options:" bold cyan "Additional options:" bold
+    colorize cyan "Additional options:" bold
     colorize yellow "R) Restore a backup" bold
     colorize red "0) Back to Main Menu" bold
-    echol" suffix
-    echo -ne "Enter your choice (0 to return): "config_port="${config_name#kharej}" "Enter your choice (0 to return): " "Enter your choice (0 to return): "
-    read choice t%.toml}"
+    echo
+    echo -ne "Enter your choice (0 to return): "
+    read choice 
 	
-	# Check if the user chose to return$config_path")ose to returnose to return
-	if [[ "$choice" == "0" ]]; then  echo -e "${MAGENTA}${index}${NC}) ${GREEN}Kharej${NC} service, Tunnel port: ${YELLOW}$config_port${NC}"hoice" == "0" ]]; thenhoice" == "0" ]]; then
-	    return    ((index++))urnurn
-	fi    fi
-	#  validationdationdation
-	while ! [[ "$choice" =~ ^[0-9]+$ ]] || (( choice < 0 || choice > ${#configs[@]} )); do dohoice < 0 || choice > ${#configs[@]} )); do
-	    colorize red "Invalid choice. Please enter a number between 1 and ${#configs[@]}." bold}." boldr a number between 1 and ${#configs[@]}." bold
+	# Check if the user chose to return
+	if [[ "$choice" == "0" ]]; then
+	    return
+	fi
+	#  validation
+	while ! [[ "$choice" =~ ^[0-9]+$ ]] || (( choice < 0 || choice > ${#configs[@]} )); do
+	    colorize red "Invalid choice. Please enter a number between 1 and ${#configs[@]}." bold
 	    echo
-	    echo -ne "Enter your choice (0 to return): "rize yellow "R) Restore a backup" boldo -ne "Enter your choice (0 to return): "o -ne "Enter your choice (0 to return): "
+	    echo -ne "Enter your choice (0 to return): "
 	    read choice
-		if [[ "$choice" == "0" ]]; then ]]; then" == "0" ]]; then
-			return   echo -ne "Enter your choice (0 to return): "		return		return
+		if [[ "$choice" == "0" ]]; then
+			return
 		fi
 	done
-	 the user chose to return
-	selected_config="${configs[$((choice - 1))]}" [[ "$choice" == "0" ]]; thenlected_config="${configs[$((choice - 1))]}"lected_config="${configs[$((choice - 1))]}"
-	config_name=$(basename "${selected_config%.toml}")sename "${selected_config%.toml}")(basename "${selected_config%.toml}")
+	
+	selected_config="${configs[$((choice - 1))]}"
+	config_name=$(basename "${selected_config%.toml}")
 	service_name="backhaul-${config_name}.service"
 	  
-	clear[[ "$choice" =~ ^[0-9]+$ ]] || (( choice < 0 || choice > ${#configs[@]} )); do
-	colorize cyan "List of available commands for $config_name:" bold number between 1 and ${#configs[@]}." boldonfig_name:" boldonfig_name:" bold
+	clear
+	colorize cyan "List of available commands for $config_name:" bold
 	echo 
-	colorize red "1) Remove this tunnel"(0 to return): "nel"nel"
-	colorize yellow "2) Restart this tunnel" choice yellow "2) Restart this tunnel" yellow "2) Restart this tunnel"
-	colorize reset "3) View service logs" [[ "$choice" == "0" ]]; thenorize reset "3) View service logs"orize reset "3) View service logs"
-	colorize reset "4) View service status"turnrize reset "4) View service status"rize reset "4) View service status"
-	colorize red "0) Back to Main Menu" bold	ficolorize red "0) Back to Main Menu" boldcolorize red "0) Back to Main Menu" bold
+	colorize red "1) Remove this tunnel"
+	colorize yellow "2) Restart this tunnel"
+	colorize reset "3) View service logs"
+	colorize reset "4) View service status"
+	colorize red "0) Back to Main Menu" bold
 	echo 
 	read -p "Enter your choice (0 to return): " choice
 	
-    case $choice innfig_name=$(basename "${selected_config%.toml}") case $choice in case $choice in
-        1) destroy_tunnel "$selected_config" ;;ce_name="backhaul-${config_name}.service"  1) destroy_tunnel "$selected_config" ;;  1) destroy_tunnel "$selected_config" ;;
+    case $choice in
+        1) destroy_tunnel "$selected_config" ;;
         2) restart_service "$service_name" ;;
-        3) view_service_logs "$service_name" ;;  3) view_service_logs "$service_name" ;;  3) view_service_logs "$service_name" ;;
-        4) view_service_status "$service_name" ;;mands for $config_name:" boldice_name" ;;ice_name" ;;
+        3) view_service_logs "$service_name" ;;
+        4) view_service_status "$service_name" ;;
         0) return ;;
-        *) echo -e "${RED}Invalid option!${NC}" && sleep 1 && return 1;;n!${NC}" && sleep 1 && return 1;;on!${NC}" && sleep 1 && return 1;;
-    esac    esac    esac
-    echo
-    read -p "Press Enter to continue..."
+        *) echo -e "${RED}Invalid option!${NC}" && sleep 1 && return 1;;
+    esac
+	
 }
+
+
 
 destroy_tunnel(){
 	#Vaiables
 	config_path="$1"
 	config_name=$(basename "${config_path%.toml}")
+    service_name="backhaul-${config_name}.service"
+    service_path="$service_dir/$service_name"
+    
+	# Check if config exists and delete it
+	if [ -f "$config_path" ]; then
+	  rm -f "$config_path" >/dev/null 2>&1
+	fi
+
+    
+    # Stop and disable the client service if it exists
+    if [[ -f "$service_path" ]]; then
+        if systemctl is-active "$service_name" &>/dev/null; then
+            systemctl disable --now "$service_name" >/dev/null 2>&1
+        fi
+        rm -f "$service_path" >/dev/null 2>&1
+    fi
+    
+        
+    echo
+    # Reload systemd to read the new unit file
+    if systemctl daemon-reload >/dev/null 2>&1 ; then
+        echo -e "Systemd daemon reloaded.\n"
+    else
+        echo -e "${RED}Failed to reload systemd daemon. Please check your system configuration.${NC}"
+    fi
+    
+    colorize green "Tunnel destroyed successfully!" bold
+    echo
+    press_key
+}
+
+
+#Function to restart services
+restart_service() {
+    echo
+    service_name="$1"
+    colorize yellow "Restarting $service_name" bold
+    echo
+    
+    # Check if service exists
+    if systemctl list-units --type=service | grep -q "$service_name"; then
+        systemctl restart "$service_name"
+        colorize green "Service restarted successfully" bold
+
+    else
+        colorize red "Cannot restart the service" 
+    fi
+    echo
+    press_key
+}
+
+view_service_logs (){
+	clear
+	journalctl -eu "$1" -f
+    press_key
+}
+
+view_service_status (){
+	clear
+	systemctl status "$1"
+    press_key
+}
+
+check_core_version() {
+    local url=$1
+    local tmp_file=$(mktemp)
+
+    # Download the file to a temporary location
+    curl -s -o "$tmp_file" "$url"
+
+    # Check if the download was successful
+    if [ $? -ne 0 ]; then
+        colorize red "Failed to check latest core version"
+        return 1
+    fi
+
+    # Read the version from the downloaded file (assumes the version is stored on the first line)
+    local file_version=$(head -n 1 "$tmp_file")
+
+    # Get the version from the backhaul_premium binary using the -v flag
+    local backhaul_version=$($config_dir/backhaul_premium -v)
+
+    # Compare the file version with the version from backhaul_premium
+    if [ "$file_version" != "$backhaul_version" ]; then
+        colorize cyan "New Core version available: $backhaul_version => $file_version" bold
+    fi
+
+    # Clean up the temporary file
+    rm "$tmp_file"
+}
+
+check_script_version() {
+    local url=$1
+    local tmp_file=$(mktemp)
+
+    # Download the file to a temporary location
+    curl -s -o "$tmp_file" "$url"
+
+    # Check if the download was successful
+    if [ $? -ne 0 ]; then
+        colorize red "Failed to check latest script version"
+        return 1
+    fi
+
+    # Read the version from the downloaded file (assumes the version is stored on the first line)
+    local file_version=$(head -n 1 "$tmp_file")
+
+    # Compare the file version with the version from backhaul_premium
+    if [ "$file_version" != "$SCRIPT_VERSION" ]; then
+        colorize cyan "New script version available: $SCRIPT_VERSION => $file_version" bold
+    fi
+
+    # Clean up the temporary file
+    rm "$tmp_file"
+}
+
+
+update_script(){
+# Define the destination path
+DEST_DIR="/usr/bin/"
+BACKHAUL_SCRIPT="backhaul"
+SCRIPT_URL="https://raw.githubusercontent.com/iPmartNetwork/Backhaul/refs/heads/master/backhaul.sh"
+
+echo
+# Check if backhaul.sh exists in /bin/bash
+if [ -f "$DEST_DIR/$BACKHAUL_SCRIPT" ]; then
+    # Remove the existing rathole
+    rm "$DEST_DIR/$BACKHAUL_SCRIPT"
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}Existing $BACKHAUL_SCRIPT has been successfully removed from $DEST_DIR.${NC}"
+    else
+        echo -e "${RED}Failed to remove existing $BACKHAUL_SCRIPT from $DEST_DIR.${NC}"
+        sleep 1
+        return 1
+    fi
+else
+    echo -e "${YELLOW}$BACKHAUL_SCRIPT does not exist in $DEST_DIR. No need to remove.${NC}"
+fi
+
+# Download the new backhaul.sh from the GitHub URL
+curl -s -L -o "$DEST_DIR/$BACKHAUL_SCRIPT" "$SCRIPT_URL"
+
+echo
+if [ $? -eq 0 ]; then
+    chmod +x "$DEST_DIR/$BACKHAUL_SCRIPT"
+    colorize yellow "Type 'backhaul' to run the script.\n" bold
+    colorize yellow "For removing script type: rm -rf /usr/bin/backhaul\n" bold
+    press_key
+    exit 0
+else
+    echo -e "${RED}Failed to download $BACKHAUL_SCRIPT from $SCRIPT_URL.${NC}"
+    sleep 1
+    return 1
+fi
+
+}
+
+# Function to start the web panel
+start_web_panel() {
+    local dashboard_dir="/var/www/backhaul-dashboard"
+    mkdir -p "$dashboard_dir"
+    cat << EOF > "$dashboard_dir/index.html"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backhaul Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #f4f4f4; }
+    </style>
+</head>
+<body>
+    <h1>Backhaul Dashboard</h1>
+    <p>Welcome to the Backhaul Web Panel. Use the menu below to manage tunnels.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Action</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><button onclick="alert('Start Tunnel')">Start Tunnel</button></td>
+                <td>Start a new tunnel configuration.</td>
+            </tr>
+            <tr>
+                <td><button onclick="alert('Stop Tunnel')">Stop Tunnel</button></td>
+                <td>Stop an existing tunnel.</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
+EOF
+
+    echo -e "\nStarting web panel on port 8080..."
+    python3 -m http.server 8080 --directory "$dashboard_dir" >/dev/null 2>&1 &
+    echo "Web panel started. Access it at http://localhost:8080"
+}
+
+# Function to stop the web panel
+stop_web_panel() {
+    local pid
+    pid=$(ps aux | grep "[h]ttp.server" | awk '{print $2}')
+    if [[ -n "$pid" ]]; then
+        kill "$pid"
+        echo "Web panel stopped."
+    else
+        echo "Web panel is not running."
+    fi
+}
+
+# Function to install the web panel
+install_web_panel() {
+    local dashboard_dir="/var/www/backhaul-dashboard"
+    local service_file="/etc/systemd/system/backhaul-web-panel.service"
+    local port=22490
+
+    # Prompt user for custom port
+    echo -ne "Enter the port for the web panel (default is 22490): "
+    read -r input_port
+    if [[ "$input_port" =~ ^[0-9]+$ ]] && [ "$input_port" -ge 1024 ] && [ "$input_port" -le 65535 ]; then
+        port="$input_port"
+    else
+        echo "Using default port: $port"
+    fi
+
+    # Prompt user for custom directory
+    echo -ne "Enter the directory for the web panel files (default is /var/www/backhaul-dashboard): "
+    read -r input_dir
+    if [[ -n "$input_dir" ]]; then
+        dashboard_dir="$input_dir"
+    fi
+
+    # Create the dashboard directory
+    mkdir -p "$dashboard_dir"
+
+    # Create a simple HTML file for the web panel
+    cat << EOF > "$dashboard_dir/index.html"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backhaul Web Panel</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        p { color: #555; }
+    </style>
+</head>
+<body>
+    <h1>Welcome to Backhaul Web Panel</h1>
+    <p>Manage your tunnels and configurations from this web interface.</p>
+</body>
+</html>
+EOF
+
+    # Create a systemd service file for the web panel
+    cat << EOF > "$service_file"
+[Unit]
+Description=Backhaul Web Panel
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m http.server $port --directory $dashboard_dir
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # Reload systemd, enable, and start the web panel service
+    systemctl daemon-reload
+    systemctl enable --now backhaul-web-panel.service
+
+    echo "Web panel installed and started. Access it at http://<your-server-ip>:$port"
+}
+
+# Function to manage the web panel service
+manage_web_panel() {
+    echo -e "\n\e[1;36mWeb Panel Management Options:\e[0m"
+    echo -e " \e[1;32m[1]\e[0m Start Web Panel"
+    echo -e " \e[1;31m[2]\e[0m Stop Web Panel"
+    echo -e " \e[1;33m[3]\e[0m Restart Web Panel"
+    echo -e " \e[1;34m[4]\e[0m View Web Panel Status"
+    echo -e " \e[1;31m[0]\e[0m Back to Main Menu"
+    read -p "Enter your choice [0-4]: " panel_choice
+    case $panel_choice in
+        1) systemctl start backhaul-web-panel.service && echo "Web panel started." ;;
+        2) systemctl stop backhaul-web-panel.service && echo "Web panel stopped." ;;
+        3) systemctl restart backhaul-web-panel.service && echo "Web panel restarted." ;;
+        4) systemctl status backhaul-web-panel.service ;;
+        0) return ;;
+        *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
+    esac
+}
+
+# Color codes
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0m'
+CYAN='\e[36m'
+MAGENTA="\e[95m"
+NC='\033[0m' # No Color
+
+# Function to display menu
+display_menu() {
+    clear
+    display_logo
+    display_server_info
+    display_backhaul_core_status
+    
+    echo
+    echo -e "\e[93m═══════════════════════════════════════════════════════════════════════\e[0m"
+    echo -e " \e[1;36mMAIN MENU\e[0m"
+    echo -e "\e[93m═══════════════════════════════════════════════════════════════════════\e[0m"
+    echo -e " \e[1;32m[1]\e[0m \e[1;37mConfigure a new tunnel [IPv4/IPv6]\e[0m"
+    echo -e " \e[1;31m[2]\e[0m \e[1;37mTunnel management menu\e[0m"
+    echo -e " \e[1;36m[3]\e[0m \e[1;37mCheck tunnels status\e[0m"
+    echo -e " \e[1;33m[4]\e[0m \e[1;37mAdvanced Options\e[0m"
+    echo -e " \e[1;35m[5]\e[0m \e[1;37mCore Manager\e[0m"
+    echo -e " \e[1;34m[6]\e[0m \e[1;37mUpdate & Install Script\e[0m"
+    echo -e " \e[1;36m[7]\e[0m \e[1;37mWeb Panel Manager\e[0m"
+    echo -e " \e[1;31m[0]\e[0m \e[1;37mExit\e[0m"
+    echo -e "\e[93m═══════════════════════════════════════════════════════════════════════\e[0m"
+}
+
+# Function to handle core manager options
+handle_core_manager() {
+    while true; do
+        echo -e "\n\e[1;36mCore Manager Options:\e[0m"
+        echo -e " \e[1;32m[1]\e[0m Install/Update Backhaul Core"
+        echo -e " \e[1;31m[2]\e[0m Remove Backhaul Core"
+        echo -e " \e[1;31m[0]\e[0m Back to Main Menu"
+        read -p "Enter your choice [0-2]: " core_choice
+        case $core_choice in
+            1) download_and_extract_backhaul "menu" ;;
+            2) remove_core ;;
+            0) return ;;
+            *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
+        esac
+    done
+}
+
+# Function to read user input
+read_option() {
+    read -p "Enter your choice [0-7]: " choice
+    case $choice in
+        1) configure_tunnel ;;
+        2) tunnel_management ;;
+        3) check_tunnel_status ;;
+        4) handle_advanced_options ;;
+        5) handle_core_manager ;;
+        6) update_script ;;
+        7) 
+            echo -e "\n\e[1;36mWeb Panel Manager Options:\e[0m"
+            echo -e " \e[1;32m[1]\e[0m Start Web Panel"
+            echo -e " \e[1;31m[2]\e[0m Stop Web Panel"
+            echo -e " \e[1;33m[3]\e[0m Restart Web Panel"
+            echo -e " \e[1;34m[4]\e[0m View Web Panel Status"
+            echo -e " \e[1;31m[5]\e[0m Install Web Panel"
+            echo -e " \e[1;31m[0]\e[0m Back to Main Menu"
+            read -p "Enter your choice [0-5]: " panel_choice
+            case $panel_choice in
+                1) start_web_panel ;;
+                2) stop_web_panel ;;
+                3) systemctl restart backhaul-web-panel.service && echo "Web panel restarted." ;;
+                4) systemctl status backhaul-web-panel.service ;;
+                5) install_web_panel ;;
+                0) return ;;
+                *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
+            esac
+            ;;
+        0) exit 0 ;;
+        *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
+    esac
+}
+
+# Function to handle advanced options
+handle_advanced_options() {
+    while true; do
+        display_advanced_menu
+        read -p "Enter your choice [0-4]: " advanced_choice
+        case $advanced_choice in
+            1) 
+                echo -e "\n\e[1;36mEnter the service name to view logs:\e[0m"
+                read -p "Service Name: " service_name
+                view_service_logs "$service_name"
+                ;;
+            2) 
+                echo -e "\n\e[1;36mEnter the service name to view status:\e[0m"
+                read -p "Service Name: " service_name
+                view_service_status "$service_name"
+                ;;
+            3) 
+                echo -e "\n\e[1;36mChecking Core Version...\e[0m"
+                check_core_version "https://example.com/core_version.txt"
+                press_key
+                ;;
+            4) 
+                echo -e "\n\e[1;36mChecking Script Version...\e[0m"
+                check_script_version "https://example.com/script_version.txt"
+                press_key
+                ;;
+            0) 
+                return
+                ;;
+            *) 
+                echo -e "\e[1;31mInvalid option! Please try again.\e[0m"
+                sleep 1
+                ;;
+        esac
+    done
+}
+
+# Main script
+while true
+do
+    display_menu
+    read_option
+done
