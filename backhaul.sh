@@ -193,7 +193,7 @@ function display_menu() {
     echo -e "${YELLOW}┌───────────────────────────────────────────┐${NC}"
     echo -e "${YELLOW}│${NC}      ${BOLD}Backhaul Manager - Main Menu${NC}      ${YELLOW}│${NC}"
     echo -e "${YELLOW}├───────────────────────────────────────────┤${NC}"
-    echo -e "${GREEN}│ 1) Configure New Tunnel [IPv4/IPv6]         │${NC}"
+    echo -e "${GREEN}│ 1) Configure New Tunnel [IPv4/IPv6]      │${NC}"
     echo -e "${CYAN}│ 2) Manage Existing Tunnels              │${NC}"
     echo -e "${MAGENTA}│ 3) Check Tunnel Status                  │${NC}"
     echo -e "${YELLOW}│ 4) Install/Update Backhaul Core         │${NC}"
@@ -444,4 +444,3 @@ while true; do
         *) echo -e "${RED}Invalid option.${NC}"; sleep 1 ;;
     esac
 done
-
