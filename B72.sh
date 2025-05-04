@@ -168,13 +168,14 @@ SERVER_ISP=$(curl -sS --max-time 2 "http://ipwhois.app/json/$SERVER_IP" | jq -r 
 display_logo() {   
     echo -e "\033[36m"  # Updated to turquoise
     cat << "EOF"
- ____  ____  ____  _  __ _     ____  _     _    
-/  _ \/  _ \/   _\/ |/ // \ /|/  _ \/ \ /\/ \   
-| | //| / \||  /  |   / | |_||| / \|| | ||| |   
-| |_\\| |-|||  \_ |   \ | | ||| |-||| \_/|| |_/\
-\____/\_/ \|\____/\_|\_\\_/ \|\_/ \|\____/\____/
-                                                
-   Lightning-fast reverse tunneling solution
+  ____________________________________________________________________________
+      ____                             _     _
+ ,   /    )                           /|   /                                 
+-----/____/---_--_----__---)__--_/_---/-| -/-----__--_/_-----------__---)__--
+ /   /        / /  ) /   ) /   ) /    /  | /    /___) /   | /| /  /   ) /   ) 
+_/___/________/_/__/_(___(_/_____(_ __/___|/____(___ _(_ __|/_|/__(___/_/____
+
+             Lightning-fast reverse tunneling solution
 EOF
     echo -e "\033[0m\033[36m"  # Updated to turquoise
     echo -e "Script Version: \033[36m${SCRIPT_VERSION}\033[36m"  # Updated to turquoise
@@ -1523,31 +1524,60 @@ display_menu() {
     echo -e "\e[93m═══════════════════════════════════════════════════════════════════════\e[0m"
     echo -e " \e[1;36mMAIN MENU\e[0m"
     echo -e "\e[93m═══════════════════════════════════════════════════════════════════════\e[0m"
-    echo -e " \e[1;32m1)\e[0m Configure a new tunnel [IPv4/IPv6]"
-    echo -e " \e[1;31m2)\e[0m Tunnel management menu"
-    echo -e " \e[1;36m3)\e[0m Check tunnels status"
-    echo -e " \e[1;33m4)\e[0m Advanced Options"
-    echo -e " \e[1;35m5)\e[0m Update & Install Backhaul Core"
-    echo -e " \e[1;34m6)\e[0m Update & Install Script"
-    echo -e " \e[1;31m7)\e[0m Remove Backhaul Core"
-    echo -e " \e[1;36m8)\e[0m Start Web Panel"
-    echo -e " \e[1;31m9)\e[0m Stop Web Panel"
-    echo -e " \e[1;31m0)\e[0m Exit"
+    echo -e " \e[1;32m[1]\e[0m \e[1;37mConfigure a new tunnel [IPv4/IPv6]\e[0m"
+    echo -e " \e[1;31m[2]\e[0m \e[1;37mTunnel management menu\e[0m"
+    echo -e " \e[1;36m[3]\e[0m \e[1;37mCheck tunnels status\e[0m"
+    echo -e " \e[1;33m[4]\e[0m \e[1;37mAdvanced Options\e[0m"
+    echo -e " \e[1;35m[5]\e[0m \e[1;37mCore Manager\e[0m"
+    echo -e " \e[1;34m[6]\e[0m \e[1;37mUpdate & Install Script\e[0m"
+    echo -e " \e[1;36m[7]\e[0m \e[1;37mWeb Panel Manager\e[0m"
+    echo -e " \e[1;31m[0]\e[0m \e[1;37mExit\e[0m"
     echo -e "\e[93m═══════════════════════════════════════════════════════════════════════\e[0m"
 }
 
-# Function to display advanced options menu
-display_advanced_menu() {
-    clear
-    echo -e "\e[93m═══════════════════════════════════════════════════════════════════════\e[0m"
-    echo -e " \e[1;36mADVANCED OPTIONS\e[0m"
-    echo -e "\e[93m═══════════════════════════════════════════════════════════════════════\e[0m"
-    echo -e " \e[1;32m1)\e[0m View Service Logs"
-    echo -e " \e[1;33m2)\e[0m View Service Status"
-    echo -e " \e[1;34m3)\e[0m Check Core Version"
-    echo -e " \e[1;35m4)\e[0m Check Script Version"
-    echo -e " \e[1;31m0)\e[0m Back to Main Menu"
-    echo -e "\e[93m═══════════════════════════════════════════════════════════════════════\e[0m"
+# Function to handle core manager options
+handle_core_manager() {
+    while true; do
+        echo -e "\n\e[1;36mCore Manager Options:\e[0m"
+        echo -e " \e[1;32m[1]\e[0m Install/Update Backhaul Core"
+        echo -e " \e[1;31m[2]\e[0m Remove Backhaul Core"
+        echo -e " \e[1;31m[0]\e[0m Back to Main Menu"
+        read -p "Enter your choice [0-2]: " core_choice
+        case $core_choice in
+            1) download_and_extract_backhaul "menu" ;;
+            2) remove_core ;;
+            0) return ;;
+            *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
+        esac
+    done
+}
+
+# Function to read user input
+read_option() {
+    read -p "Enter your choice [0-7]: " choice
+    case $choice in
+        1) configure_tunnel ;;
+        2) tunnel_management ;;
+        3) check_tunnel_status ;;
+        4) handle_advanced_options ;;
+        5) handle_core_manager ;;
+        6) update_script ;;
+        7) 
+            echo -e "\n\e[1;36mWeb Panel Manager Options:\e[0m"
+            echo -e " \e[1;32m[1]\e[0m Start Web Panel"
+            echo -e " \e[1;31m[2]\e[0m Stop Web Panel"
+            echo -e " \e[1;31m[0]\e[0m Back to Main Menu"
+            read -p "Enter your choice [0-2]: " panel_choice
+            case $panel_choice in
+                1) start_web_panel ;;
+                2) stop_web_panel ;;
+                0) return ;;
+                *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
+            esac
+            ;;
+        0) exit 0 ;;
+        *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
+    esac
 }
 
 # Function to handle advanced options
@@ -1585,24 +1615,6 @@ handle_advanced_options() {
                 ;;
         esac
     done
-}
-
-# Function to read user input
-read_option() {
-    read -p "Enter your choice [0-9]: " choice
-    case $choice in
-        1) configure_tunnel ;;
-        2) tunnel_management ;;
-        3) check_tunnel_status ;;
-        4) handle_advanced_options ;;
-        5) download_and_extract_backhaul "menu" ;;
-        6) update_script ;;
-        7) remove_core ;;
-        8) start_web_panel ;;
-        9) stop_web_panel ;;
-        0) exit 0 ;;
-        *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
-    esac
 }
 
 # Main script
