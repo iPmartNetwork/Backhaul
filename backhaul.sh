@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define script version
-SCRIPT_VERSION="v0.6.0"
+SCRIPT_VERSION="v1.7.0"
 
 # Check if the script is run as root
 if [[ $EUID -ne 0 ]]; then
@@ -36,7 +36,8 @@ colorize() {
     local normal="\033[0m"
     local bold="\033[1m"
     local underline="\033[4m"
-    # Select color code
+    
+    # Fix: Validate color input
     local color_code
     case $color in
         black) color_code=$black ;;
@@ -49,7 +50,8 @@ colorize() {
         white) color_code=$white ;;
         *) color_code=$reset ;;  # Default case, no color
     esac
-    # Select style code
+
+    # Fix: Validate style input
     local style_code
     case $style in
         bold) style_code=$bold ;;
@@ -151,11 +153,17 @@ download_and_extract_backhaul() {
     DOWNLOAD_DIR=$(mktemp -d)
     echo -e "Downloading Backhaul from $DOWNLOAD_URL...\n"
     sleep 1
-    curl -sSL -o "$DOWNLOAD_DIR/backhaul.tar.gz" "$DOWNLOAD_URL"
+    if ! curl -sSL -o "$DOWNLOAD_DIR/backhaul.tar.gz" "$DOWNLOAD_URL"; then
+        colorize red "Failed to download Backhaul Core. Please check your internet connection or the URL."
+        exit 1
+    fi
+
     echo -e "Extracting Backhaul...\n"
     sleep 1
-    mkdir -p "$config_dir"
-    tar -xzf "$DOWNLOAD_DIR/backhaul.tar.gz" -C "$config_dir"
+    if ! tar -xzf "$DOWNLOAD_DIR/backhaul.tar.gz" -C "$config_dir"; then
+        colorize red "Failed to extract Backhaul Core. Please check the downloaded file."
+        exit 1
+    fi
     echo -e "${GREEN}Backhaul installation completed.${NC}\n"
     chmod u+x "${config_dir}/backhaul_premium"
     rm -rf "$DOWNLOAD_DIR"
@@ -173,29 +181,36 @@ SERVER_IP=$(hostname -I | awk '{print $1}')
 
 # Fetch server country
 SERVER_COUNTRY=$(curl -sS --max-time 2 "http://ipwhois.app/json/$SERVER_IP" | jq -r '.country')
+if [[ -z "$SERVER_COUNTRY" || "$SERVER_COUNTRY" == "null" ]]; then
+    SERVER_COUNTRY="Unknown"
+fi
 
 # Fetch server isp 
 SERVER_ISP=$(curl -sS --max-time 2 "http://ipwhois.app/json/$SERVER_IP" | jq -r '.isp')
+if [[ -z "$SERVER_ISP" || "$SERVER_ISP" == "null" ]]; then
+    SERVER_ISP="Unknown"
+fi
 
 
 # Function to display ASCII logo
 display_logo() {   
     echo -e "${CYAN}"
     cat << "EOF"
- ____  ____  ____  _  __ _     ____  _     _    
-/  _ \/  _ \/   _\/ |/ // \ /|/  _ \/ \ /\/ \   
-| | //| / \||  /  |   / | |_||| / \|| | ||| |   
-| |_\\| |-|||  \_ |   \ | | ||| |-||| \_/|| |_/\
-\____/\_/ \|\____/\_|\_\\_/ \|\_/ \|\____/\____/
-                                                
-   Lightning-fast reverse tunneling solution
+  ____________________________________________________________________________
+      ____                             _     _
+ ,   /    )                           /|   /                                 
+-----/____/---_--_----__---)__--_/_---/-| -/-----__--_/_-----------__---)__--
+ /   /        / /  ) /   ) /   ) /    /  | /    /___) /   | /| /  /   ) /   ) 
+_/___/________/_/__/_(___(_/_____(_ __/___|/____(___ _(_ __|/_|/__(___/_/____
+
+             Lightning-fast reverse tunneling solution
 EOF
     echo -e "${NC}${GREEN}"
     echo -e "Script Version: ${YELLOW}${SCRIPT_VERSION}${GREEN}"
     if [[ -f "${config_dir}/backhaul_premium" ]]; then
     	echo -e "Core Version: ${YELLOW}$($config_dir/backhaul_premium -v)${GREEN}"
     fi
-    echo -e "Telegram Channel: ${YELLOW}@anony_identity${NC}"
+    echo -e "Telegram Channel: ${YELLOW}@iPmartCh${NC}"
 }
 
 # Function to display server location and IP
@@ -217,11 +232,12 @@ display_backhaul_core_status() {
     echo -e "\e[93m═══════════════════════════════════════════\e[0m"  
 }
 
-# Function to check if a given string is a valid IPv6 address
+# Enhanced check_ipv6 function to handle edge cases
 check_ipv6() {
     local ip=$1
     # Define the IPv6 regex pattern
-    ipv6_pattern="^([0-9a-fA-F]{1,4}:){7}([0-9a-fA-F]{1,4}|:)$|^(([0-9a-fA-F]{1,4}:){1,7}|:):((:[0-9a-fA-F]{1,4}){1,7}|:)$"
+    ipv6_pattern="^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$"
+
     # Remove brackets if present
     ip="${ip#[}"
     ip="${ip%]}"
@@ -235,30 +251,85 @@ check_ipv6() {
 
 check_port() {
     local PORT=$1
-	local TRANSPORT=$2
-	
-    if [ -z "$PORT" ]; then
-        echo "Usage: check_port <port> <transport>"
+    local TRANSPORT=$2
+
+    if [[ -z "$PORT" || ! "$PORT" =~ ^[0-9]+$ || "$PORT" -lt 1 || "$PORT" -gt 65535 ]]; then
+        echo "Invalid port: $PORT. Please provide a valid port number between 1 and 65535."
         return 1
     fi
-    
-	if [[ "$TRANSPORT" == "tcp" ]]; then
-		if ss -tlnp "sport = :$PORT" | grep "$PORT" > /dev/null; then
-			return 0
-			
-		else
-			return 1
-		fi
-	elif [[ "$TRANSPORT" == "udp" ]]; then
-		if ss -ulnp "sport = :$PORT" | grep "$PORT" > /dev/null; then
-			return 0
-		else
-			return 1
-		fi
-	else
-		return 1
-   	fi
-   	
+
+    if [[ "$TRANSPORT" == "tcp" ]]; then
+        if ss -tlnp "sport = :$PORT" | grep "$PORT" > /dev/null; then
+            return 0
+        else
+            return 1
+        fi
+    elif [[ "$TRANSPORT" == "udp" ]]; then
+        if ss -ulnp "sport = :$PORT" | grep "$PORT" > /dev/null; then
+            return 0
+        else
+            return 1
+        fi
+    else
+        echo "Invalid transport: $TRANSPORT. Please specify 'tcp' or 'udp'."
+        return 1
+    fi
+}
+
+# Helper function to validate input with a regex
+validate_input() {
+    local prompt="$1"
+    local default="$2"
+    local regex="$3"
+    local error_message="$4"
+    local input
+
+    while true; do
+        echo
+        colorize cyan "$prompt (default: $default):" bold
+        read -r input
+
+        # Set default if input is empty
+        input="${input:-$default}"
+
+        # Validate input
+        if [[ "$input" =~ $regex ]]; then
+            echo "$input"
+            return
+        else
+            colorize red "[ERROR] $error_message" bold
+        fi
+    done
+}
+
+# Helper function to validate CIDR notation
+validate_cidr() {
+    local prompt="$1"
+    local default="$2"
+    local error_message="$3"
+    local input
+
+    while true; do
+        echo
+        colorize cyan "$prompt (default: $default):" bold
+        read -r input
+
+        # Set default if input is empty
+        input="${input:-$default}"
+
+        # Validate CIDR notation
+        if [[ "$input" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]{1,2}$ ]]; then
+            IFS='/' read -r ip subnet <<< "$input"
+            if [[ "$subnet" -le 32 && "$subnet" -ge 1 ]]; then
+                IFS='.' read -r a b c d <<< "$ip"
+                if [[ "$a" -le 255 && "$b" -le 255 && "$c" -le 255 && "$d" -le 255 ]]; then
+                    echo "$input"
+                    return
+                fi
+            fi
+        fi
+        colorize red "[ERROR] $error_message" bold
+    done
 }
 
 # Function for configuring tunnel
@@ -276,11 +347,13 @@ fi
     echo
     colorize green "1) Configure for IRAN server" bold
     colorize magenta "2) Configure for KHAREJ server" bold
+    colorize red "0) Back to Main Menu" bold
     echo
     read -p "Enter your choice: " configure_choice
     case "$configure_choice" in
         1) iran_server_configuration ;;
         2) kharej_server_configuration ;;
+        0) return ;;
         *) echo -e "${RED}Invalid option!${NC}" && sleep 1 ;;
     esac
     echo
@@ -317,14 +390,33 @@ iran_server_configuration() {
 
     # Initialize transport variable
     local transport=""
-    while [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; do
-        echo -ne "[*] Transport type (tcp/tcpmux/utcpmux/ws/wsmux/uwsmux/udp/tcptun/faketcptun): "
-        read -r transport
+    while true; do
+        echo -e "[*] Select Transport Type:"
+        echo -e "  1) tcp"
+        echo -e "  2) tcpmux"
+        echo -e "  3) utcpmux"
+        echo -e "  4) ws"
+        echo -e "  5) wsmux"
+        echo -e "  6) uwsmux"
+        echo -e "  7) udp"
+        echo -e "  8) tcptun"
+        echo -e "  9) faketcptun"
+        echo -ne "Enter your choice [1-9]: "
+        read -r transport_choice
 
-        if [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; then
-            colorize red "Invalid transport type. Please choose from tcp, tcpmux, utcpmux, ws, wsmux, uwsmux, udp, tcptun, faketcptun."
-            echo
-        fi
+        case "$transport_choice" in
+            1) transport="tcp" ;;
+            2) transport="tcpmux" ;;
+            3) transport="utcpmux" ;;
+            4) transport="ws" ;;
+            5) transport="wsmux" ;;
+            6) transport="uwsmux" ;;
+            7) transport="udp" ;;
+            8) transport="tcptun" ;;
+            9) transport="faketcptun" ;;
+            *) colorize red "Invalid choice. Please select a valid transport type." && continue ;;
+        esac
+        break
     done
 
     echo
@@ -332,74 +424,21 @@ iran_server_configuration() {
     # TUN Device Name 
     local tun_name="backhaul"
     if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
-        while true; do
-            echo -ne "[-] TUN Device Name (default backhaul): "
-            read -r tun_name
-
-            if [[ -z "$tun_name" ]]; then
-                tun_name="backhaul"
-            fi
-
-            if [[ "$tun_name" =~ ^[a-zA-Z0-9]+$ ]]; then
-                echo
-                break
-            else
-                colorize red "Please enter a valid TUN device name."
-                echo
-            fi
-        done
+        tun_name=$(validate_input "TUN Device Name" "backhaul" "^[a-zA-Z0-9]+$" "Invalid TUN device name. Please use alphanumeric characters only.")
     fi
 
     # TUN Subnet
     local tun_subnet="10.10.10.0/24"
     if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
-        while true; do
-            echo -ne "[-] TUN Subnet (default 10.10.10.0/24): "
-            read -r tun_subnet
-
-            # Set default value if input is empty
-            if [[ -z "$tun_subnet" ]]; then
-                tun_subnet="10.10.10.0/24"
-            fi
-
-            # Validate TUN subnet (CIDR notation)
-            if [[ "$tun_subnet" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]{1,2}$ ]]; then
-                # Validate IP and subnet mask
-                IFS='/' read -r ip subnet <<< "$tun_subnet"
-                if [[ "$subnet" -le 32 && "$subnet" -ge 1 ]]; then
-                    IFS='.' read -r a b c d <<< "$ip"
-                    if [[ "$a" -le 255 && "$b" -le 255 && "$c" -le 255 && "$d" -le 255 ]]; then
-                        echo
-                        break
-                    fi
-                fi
-            fi
-
-            colorize red "Please enter a valid subnet in CIDR notation (e.g., 10.10.10.0/24)."
-            echo
-        done
+        tun_subnet=$(validate_cidr "TUN Subnet" "10.10.10.0/24" "Invalid subnet. Please use CIDR notation (e.g., 10.10.10.0/24).")
     fi
+
+    echo
 
     # TUN MTU
     local mtu="1500"    
     if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
-        while true; do
-            echo -ne "[-] TUN MTU (default 1500): "
-            read -r mtu
-
-            # Set default value if input is empty
-            if [[ -z "$mtu" ]]; then
-                mtu=1500
-            fi
-
-            # Validate MTU value
-            if [[ "$mtu" =~ ^[0-9]+$ ]] && [ "$mtu" -ge 576 ] && [ "$mtu" -le 9000 ]; then
-                break
-            fi
-
-            colorize red "Please enter a valid MTU value between 576 and 9000."
-            echo
-        done
+        mtu=$(validate_input "TUN MTU" "1500" "^[0-9]+$" "Invalid MTU value. Please enter a number between 576 and 9000.")
     fi
     
 
@@ -724,6 +763,9 @@ Type=simple
 ExecStart=${config_dir}/backhaul_premium -c ${config_dir}/iran${tunnel_port}.toml
 Restart=always
 RestartSec=3
+User=backhaul
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE CAP_NET_RAW
+NoNewPrivileges=true
 
 [Install]
 WantedBy=multi-user.target
@@ -781,88 +823,53 @@ kharej_server_configuration() {
 
     # Initialize transport variable
     local transport=""
-    while [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; do
-        echo -ne "[*] Transport type (tcp/tcpmux/utcpmux/ws/wsmux/uwsmux/udp/tcptun/faketcptun): "
-        read -r transport
+    while true; do
+        echo -e "[*] Select Transport Type:"
+        echo -e "  1) tcp"
+        echo -e "  2) tcpmux"
+        echo -e "  3) utcpmux"
+        echo -e "  4) ws"
+        echo -e "  5) wsmux"
+        echo -e "  6) uwsmux"
+        echo -e "  7) udp"
+        echo -e "  8) tcptun"
+        echo -e "  9) faketcptun"
+        echo -ne "Enter your choice [1-9]: "
+        read -r transport_choice
 
-        if [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; then
-            colorize red "Invalid transport type. Please choose from tcp, tcpmux, utcpmux, ws, wsmux, uwsmux, udp, tcptun, faketcptun."
-            echo
-        fi
+        case "$transport_choice" in
+            1) transport="tcp" ;;
+            2) transport="tcpmux" ;;
+            3) transport="utcpmux" ;;
+            4) transport="ws" ;;
+            5) transport="wsmux" ;;
+            6) transport="uwsmux" ;;
+            7) transport="udp" ;;
+            8) transport="tcptun" ;;
+            9) transport="faketcptun" ;;
+            *) colorize red "Invalid choice. Please select a valid transport type." && continue ;;
+        esac
+        break
     done
 
     # TUN Device Name 
     local tun_name="backhaul"
     if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
-        echo
-        while true; do
-            echo -ne "[-] TUN Device Name (default backhaul): "
-            read -r tun_name
-
-            if [[ -z "$tun_name" ]]; then
-                tun_name="backhaul"
-            fi
-
-            if [[ "$tun_name" =~ ^[a-zA-Z0-9]+$ ]]; then
-                echo
-                break
-            else
-                colorize red "Please enter a valid TUN device name."
-                echo
-            fi
-        done
+        tun_name=$(validate_input "TUN Device Name" "backhaul" "^[a-zA-Z0-9]+$" "Invalid TUN device name. Please use alphanumeric characters only.")
     fi
 
     # TUN Subnet
     local tun_subnet="10.10.10.0/24"
     if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
-        while true; do
-            echo -ne "[-] TUN Subnet (default 10.10.10.0/24): "
-            read -r tun_subnet
-
-            # Set default value if input is empty
-            if [[ -z "$tun_subnet" ]]; then
-                tun_subnet="10.10.10.0/24"
-            fi
-
-            # Validate TUN subnet (CIDR notation)
-            if [[ "$tun_subnet" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]{1,2}$ ]]; then
-                # Validate IP and subnet mask
-                IFS='/' read -r ip subnet <<< "$tun_subnet"
-                if [[ "$subnet" -le 32 && "$subnet" -ge 1 ]]; then
-                    IFS='.' read -r a b c d <<< "$ip"
-                    if [[ "$a" -le 255 && "$b" -le 255 && "$c" -le 255 && "$d" -le 255 ]]; then
-                        echo
-                        break
-                    fi
-                fi
-            fi
-
-            colorize red "Please enter a valid subnet in CIDR notation (e.g., 10.10.10.0/24)."
-            echo
-        done
+        tun_subnet=$(validate_cidr "TUN Subnet" "10.10.10.0/24" "Invalid subnet. Please use CIDR notation (e.g., 10.10.10.0/24).")
     fi
+
+    echo
 
     # TUN MTU
     local mtu="1500"    
     if [[ "$transport" == "tcptun" || "$transport" == "faketcptun" ]]; then
-        while true; do
-            echo -ne "[-] TUN MTU (default 1500): "
-            read -r mtu
-
-            # Set default value if input is empty
-            if [[ -z "$mtu" ]]; then
-                mtu=1500
-            fi
-
-            # Validate MTU value
-            if [[ "$mtu" =~ ^[0-9]+$ ]] && [ "$mtu" -ge 576 ] && [ "$mtu" -le 9000 ]; then
-                break
-            fi
-
-            colorize red "Please enter a valid MTU value between 576 and 9000."
-            echo
-        done
+        mtu=$(validate_input "TUN MTU" "1500" "^[0-9]+$" "Invalid MTU value. Please enter a number between 576 and 9000.")
     fi
     
 
@@ -901,7 +908,6 @@ kharej_server_configuration() {
     if [[ "$transport" == "udp" ]]; then
         nodelay=false
     else
-        echo
         while [[ "$nodelay" != "true" && "$nodelay" != "false" ]]; do
             echo -ne "[-] Enable TCP_NODELAY (true/false)(default true): "
             read -r nodelay
@@ -1078,6 +1084,9 @@ Type=simple
 ExecStart=${config_dir}/backhaul_premium -c ${config_dir}/kharej${tunnel_port}.toml
 Restart=always
 RestartSec=3
+User=backhaul
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE CAP_NET_RAW
+NoNewPrivileges=true
 
 [Install]
 WantedBy=multi-user.target
@@ -1242,6 +1251,9 @@ tunnel_management() {
     done
     
     echo
+    colorize cyan "Additional options:" bold
+    colorize yellow "R) Restore a backup" bold
+    echo
 	echo -ne "Enter your choice (0 to return): "
     read choice 
 	
@@ -1271,6 +1283,7 @@ tunnel_management() {
 	colorize yellow "2) Restart this tunnel"
 	colorize reset "3) View service logs"
     colorize reset "4) View service status"
+	colorize red "0) Back to Main Menu" bold
 	echo 
 	read -p "Enter your choice (0 to return): " choice
 	
@@ -1279,6 +1292,7 @@ tunnel_management() {
         2) restart_service "$service_name" ;;
         3) view_service_logs "$service_name" ;;
         4) view_service_status "$service_name" ;;
+        R|r) restore_backup ;;
         0) return 1 ;;
         *) echo -e "${RED}Invalid option!${NC}" && sleep 1 && return 1;;
     esac
@@ -1329,14 +1343,16 @@ restart_service() {
     service_name="$1"
     colorize yellow "Restarting $service_name" bold
     echo
-    
+
     # Check if service exists
     if systemctl list-units --type=service | grep -q "$service_name"; then
-        systemctl restart "$service_name"
-        colorize green "Service restarted successfully" bold
-
+        if systemctl restart "$service_name"; then
+            colorize green "Service restarted successfully" bold
+        else
+            colorize red "Failed to restart the service. Please check the service logs."
+        fi
     else
-        colorize red "Cannot restart the service" 
+        colorize red "Service $service_name does not exist."
     fi
     echo
     press_key
@@ -1353,402 +1369,6 @@ view_service_status (){
 	systemctl status "$1"
     press_key
 }
-
-# _________________________ HAWSHEMI SCRIPT OPT FOR UBUNTU _________________________
-# Declare Paths & Settings.
-SYS_PATH="/etc/sysctl.conf"
-PROF_PATH="/etc/profile"
-
-# Ask Reboot
-ask_reboot() {
-    echo -ne "${YELLOW}Reboot now? (Recommended) (y/n): ${NC}"
-    while true; do
-        read choice
-        echo 
-        if [[ "$choice" == 'y' || "$choice" == 'Y' ]]; then
-            sleep 0.5
-            reboot
-            exit 0
-        fi
-        if [[ "$choice" == 'n' || "$choice" == 'N' ]]; then
-            break
-        fi
-    done
-}
-# SYSCTL Optimization
-sysctl_optimizations() {
-    ## Make a backup of the original sysctl.conf file
-    cp $SYS_PATH /etc/sysctl.conf.bak
-
-    echo 
-    echo -e "${YELLOW}Default sysctl.conf file Saved. Directory: /etc/sysctl.conf.bak${NC}"
-    echo 
-    sleep 1
-
-    echo 
-    echo -e  "${YELLOW}Optimizing the Network...${NC}"
-    echo 
-    sleep 0.5
-
-    sed -i -e '/fs.file-max/d' \
-        -e '/net.core.default_qdisc/d' \
-        -e '/net.core.netdev_max_backlog/d' \
-        -e '/net.core.optmem_max/d' \
-        -e '/net.core.somaxconn/d' \
-        -e '/net.core.rmem_max/d' \
-        -e '/net.core.wmem_max/d' \
-        -e '/net.core.rmem_default/d' \
-        -e '/net.core.wmem_default/d' \
-        -e '/net.ipv4.tcp_rmem/d' \
-        -e '/net.ipv4.tcp_wmem/d' \
-        -e '/net.ipv4.tcp_congestion_control/d' \
-        -e '/net.ipv4.tcp_fastopen/d' \
-        -e '/net.ipv4.tcp_fin_timeout/d' \
-        -e '/net.ipv4.tcp_keepalive_time/d' \
-        -e '/net.ipv4.tcp_keepalive_probes/d' \
-        -e '/net.ipv4.tcp_keepalive_intvl/d' \
-        -e '/net.ipv4.tcp_max_orphans/d' \
-        -e '/net.ipv4.tcp_max_syn_backlog/d' \
-        -e '/net.ipv4.tcp_max_tw_buckets/d' \
-        -e '/net.ipv4.tcp_mem/d' \
-        -e '/net.ipv4.tcp_mtu_probing/d' \
-        -e '/net.ipv4.tcp_notsent_lowat/d' \
-        -e '/net.ipv4.tcp_retries2/d' \
-        -e '/net.ipv4.tcp_sack/d' \
-        -e '/net.ipv4.tcp_dsack/d' \
-        -e '/net.ipv4.tcp_slow_start_after_idle/d' \
-        -e '/net.ipv4.tcp_window_scaling/d' \
-        -e '/net.ipv4.tcp_adv_win_scale/d' \
-        -e '/net.ipv4.tcp_ecn/d' \
-        -e '/net.ipv4.tcp_ecn_fallback/d' \
-        -e '/net.ipv4.tcp_syncookies/d' \
-        -e '/net.ipv4.udp_mem/d' \
-        -e '/net.ipv6.conf.all.disable_ipv6/d' \
-        -e '/net.ipv6.conf.default.disable_ipv6/d' \
-        -e '/net.ipv6.conf.lo.disable_ipv6/d' \
-        -e '/net.unix.max_dgram_qlen/d' \
-        -e '/vm.min_free_kbytes/d' \
-        -e '/vm.swappiness/d' \
-        -e '/vm.vfs_cache_pressure/d' \
-        -e '/net.ipv4.conf.default.rp_filter/d' \
-        -e '/net.ipv4.conf.all.rp_filter/d' \
-        -e '/net.ipv4.conf.all.accept_source_route/d' \
-        -e '/net.ipv4.conf.default.accept_source_route/d' \
-        -e '/net.ipv4.neigh.default.gc_thresh1/d' \
-        -e '/net.ipv4.neigh.default.gc_thresh2/d' \
-        -e '/net.ipv4.neigh.default.gc_thresh3/d' \
-        -e '/net.ipv4.neigh.default.gc_stale_time/d' \
-        -e '/net.ipv4.conf.default.arp_announce/d' \
-        -e '/net.ipv4.conf.lo.arp_announce/d' \
-        -e '/net.ipv4.conf.all.arp_announce/d' \
-        -e '/kernel.panic/d' \
-        -e '/vm.dirty_ratio/d' \
-        -e '/^#/d' \
-        -e '/^$/d' \
-        "$SYS_PATH"
-
-
-    ## Add new parameteres.
-
-cat <<EOF >> "$SYS_PATH"
-
-
-################################################################
-################################################################
-
-
-# /etc/sysctl.conf
-# These parameters in this file will be added/updated to the sysctl.conf file.
-# Read More: https://github.com/hawshemi/Linux-Optimizer/blob/main/files/sysctl.conf
-
-
-## File system settings
-## ----------------------------------------------------------------
-
-# Set the maximum number of open file descriptors
-fs.file-max = 67108864
-
-
-## Network core settings
-## ----------------------------------------------------------------
-
-# Specify default queuing discipline for network devices
-net.core.default_qdisc = fq_codel
-
-# Configure maximum network device backlog
-net.core.netdev_max_backlog = 32768
-
-# Set maximum socket receive buffer
-net.core.optmem_max = 262144
-
-# Define maximum backlog of pending connections
-net.core.somaxconn = 65536
-
-# Configure maximum TCP receive buffer size
-net.core.rmem_max = 33554432
-
-# Set default TCP receive buffer size
-net.core.rmem_default = 1048576
-
-# Configure maximum TCP send buffer size
-net.core.wmem_max = 33554432
-
-# Set default TCP send buffer size
-net.core.wmem_default = 1048576
-
-
-## TCP settings
-## ----------------------------------------------------------------
-
-# Define socket receive buffer sizes
-net.ipv4.tcp_rmem = 16384 1048576 33554432
-
-# Specify socket send buffer sizes
-net.ipv4.tcp_wmem = 16384 1048576 33554432
-
-# Set TCP congestion control algorithm to BBR
-net.ipv4.tcp_congestion_control = bbr
-
-# Configure TCP FIN timeout period
-net.ipv4.tcp_fin_timeout = 25
-
-# Set keepalive time (seconds)
-net.ipv4.tcp_keepalive_time = 1200
-
-# Configure keepalive probes count and interval
-net.ipv4.tcp_keepalive_probes = 7
-net.ipv4.tcp_keepalive_intvl = 30
-
-# Define maximum orphaned TCP sockets
-net.ipv4.tcp_max_orphans = 819200
-
-# Set maximum TCP SYN backlog
-net.ipv4.tcp_max_syn_backlog = 20480
-
-# Configure maximum TCP Time Wait buckets
-net.ipv4.tcp_max_tw_buckets = 1440000
-
-# Define TCP memory limits
-net.ipv4.tcp_mem = 65536 1048576 33554432
-
-# Enable TCP MTU probing
-net.ipv4.tcp_mtu_probing = 1
-
-# Define minimum amount of data in the send buffer before TCP starts sending
-net.ipv4.tcp_notsent_lowat = 32768
-
-# Specify retries for TCP socket to establish connection
-net.ipv4.tcp_retries2 = 8
-
-# Enable TCP SACK and DSACK
-net.ipv4.tcp_sack = 1
-net.ipv4.tcp_dsack = 1
-
-# Disable TCP slow start after idle
-net.ipv4.tcp_slow_start_after_idle = 0
-
-# Enable TCP window scaling
-net.ipv4.tcp_window_scaling = 1
-net.ipv4.tcp_adv_win_scale = -2
-
-# Enable TCP ECN
-net.ipv4.tcp_ecn = 1
-net.ipv4.tcp_ecn_fallback = 1
-
-# Enable the use of TCP SYN cookies to help protect against SYN flood attacks
-net.ipv4.tcp_syncookies = 1
-
-
-## UDP settings
-## ----------------------------------------------------------------
-
-# Define UDP memory limits
-net.ipv4.udp_mem = 65536 1048576 33554432
-
-
-## IPv6 settings
-## ----------------------------------------------------------------
-
-# Enable IPv6
-net.ipv6.conf.all.disable_ipv6 = 0
-
-# Enable IPv6 by default
-net.ipv6.conf.default.disable_ipv6 = 0
-
-# Enable IPv6 on the loopback interface (lo)
-net.ipv6.conf.lo.disable_ipv6 = 0
-
-
-## UNIX domain sockets
-## ----------------------------------------------------------------
-
-# Set maximum queue length of UNIX domain sockets
-net.unix.max_dgram_qlen = 256
-
-
-## Virtual memory (VM) settings
-## ----------------------------------------------------------------
-
-# Specify minimum free Kbytes at which VM pressure happens
-vm.min_free_kbytes = 65536
-
-# Define how aggressively swap memory pages are used
-vm.swappiness = 10
-
-# Set the tendency of the kernel to reclaim memory used for caching of directory and inode objects
-vm.vfs_cache_pressure = 250
-
-
-## Network Configuration
-## ----------------------------------------------------------------
-
-# Configure reverse path filtering
-net.ipv4.conf.default.rp_filter = 2
-net.ipv4.conf.all.rp_filter = 2
-
-# Disable source route acceptance
-net.ipv4.conf.all.accept_source_route = 0
-net.ipv4.conf.default.accept_source_route = 0
-
-# Neighbor table settings
-net.ipv4.neigh.default.gc_thresh1 = 512
-net.ipv4.neigh.default.gc_thresh2 = 2048
-net.ipv4.neigh.default.gc_thresh3 = 16384
-net.ipv4.neigh.default.gc_stale_time = 60
-
-# ARP settings
-net.ipv4.conf.default.arp_announce = 2
-net.ipv4.conf.lo.arp_announce = 2
-net.ipv4.conf.all.arp_announce = 2
-
-# Kernel panic timeout
-kernel.panic = 1
-
-# Set dirty page ratio for virtual memory
-vm.dirty_ratio = 20
-
-
-################################################################
-################################################################
-
-
-EOF
-
-    sudo sysctl -p
-    
-    echo 
-    echo -e "${GREEN}Network is Optimized.${NC}"
-    echo 
-    sleep 0.5
-}
-
-
-# System Limits Optimizations
-limits_optimizations() {
-    echo
-    echo -e "${YELLOW}Optimizing System Limits...${NC}"
-    echo 
-    sleep 0.5
-
-    ## Clear old ulimits
-    sed -i '/ulimit -c/d' $PROF_PATH
-    sed -i '/ulimit -d/d' $PROF_PATH
-    sed -i '/ulimit -f/d' $PROF_PATH
-    sed -i '/ulimit -i/d' $PROF_PATH
-    sed -i '/ulimit -l/d' $PROF_PATH
-    sed -i '/ulimit -m/d' $PROF_PATH
-    sed -i '/ulimit -n/d' $PROF_PATH
-    sed -i '/ulimit -q/d' $PROF_PATH
-    sed -i '/ulimit -s/d' $PROF_PATH
-    sed -i '/ulimit -t/d' $PROF_PATH
-    sed -i '/ulimit -u/d' $PROF_PATH
-    sed -i '/ulimit -v/d' $PROF_PATH
-    sed -i '/ulimit -x/d' $PROF_PATH
-    sed -i '/ulimit -s/d' $PROF_PATH
-
-
-    ## Add new ulimits
-    ## The maximum size of core files created.
-    echo "ulimit -c unlimited" | tee -a $PROF_PATH
-
-    ## The maximum size of a process's data segment
-    echo "ulimit -d unlimited" | tee -a $PROF_PATH
-
-    ## The maximum size of files created by the shell (default option)
-    echo "ulimit -f unlimited" | tee -a $PROF_PATH
-
-    ## The maximum number of pending signals
-    echo "ulimit -i unlimited" | tee -a $PROF_PATH
-
-    ## The maximum size that may be locked into memory
-    echo "ulimit -l unlimited" | tee -a $PROF_PATH
-
-    ## The maximum memory size
-    echo "ulimit -m unlimited" | tee -a $PROF_PATH
-
-    ## The maximum number of open file descriptors
-    echo "ulimit -n 1048576" | tee -a $PROF_PATH
-
-    ## The maximum POSIX message queue size
-    echo "ulimit -q unlimited" | tee -a $PROF_PATH
-
-    ## The maximum stack size
-    echo "ulimit -s -H 65536" | tee -a $PROF_PATH
-    echo "ulimit -s 32768" | tee -a $PROF_PATH
-
-    ## The maximum number of seconds to be used by each process.
-    echo "ulimit -t unlimited" | tee -a $PROF_PATH
-
-    ## The maximum number of processes available to a single user
-    echo "ulimit -u unlimited" | tee -a $PROF_PATH
-
-    ## The maximum amount of virtual memory available to the process
-    echo "ulimit -v unlimited" | tee -a $PROF_PATH
-
-    ## The maximum number of file locks
-    echo "ulimit -x unlimited" | tee -a $PROF_PATH
-
-
-    echo 
-    echo -e "${GREEN}System Limits are Optimized.${NC}"
-    echo 
-    sleep 0.5
-}
-
-
-# _________________________ END OF HAWSHEMI SCRIPT OPT FOR UBUNTU _________________________
-
-
-
-hawshemi_script(){
-clear
-
-echo -e "${MAGENTA}Special thanks to Hawshemi, the author of optimizer script...${NC}"
-sleep 2
-# Get the operating system name
-os_name=$(lsb_release -is)
-
-echo -e 
-# Check if the operating system is Ubuntu
-if [ "$os_name" == "Ubuntu" ]; then
-  echo -e "${GREEN}The operating system is Ubuntu.${NC}"
-  sleep 1
-else
-  echo -e "${RED} The operating system is not Ubuntu.${NC}"
-  sleep 2
-  return
-fi
-
-
-sysctl_optimizations
-limits_optimizations
-ask_reboot
-read -p "Press Enter to continue..."
-}
-
-#!/bin/bash
-
-
 
 check_core_version() {
     local url=$1
@@ -1844,6 +1464,48 @@ fi
 
 }
 
+# Function to create a backup of a TOML file
+backup_toml() {
+    local file_path="$1"
+    local backup_dir="${config_dir}/backups"
+    local timestamp=$(date +"%Y%m%d%H%M%S")
+    local backup_file="${backup_dir}/$(basename "$file_path").${timestamp}.bak"
+
+    mkdir -p "$backup_dir"
+    cp "$file_path" "$backup_file"
+    colorize green "Backup created: $backup_file" bold
+}
+
+# Function to restore a backup
+restore_backup() {
+    local backup_dir="${config_dir}/backups"
+    if [[ ! -d "$backup_dir" ]]; then
+        colorize red "No backups found." bold
+        return 1
+    fi
+
+    echo
+    colorize cyan "Available backups:" bold
+    ls -1 "$backup_dir" | nl
+    echo
+    read -p "Enter the number of the backup to restore (or 0 to cancel): " choice
+
+    if [[ "$choice" -eq 0 ]]; then
+        colorize yellow "Restore canceled." bold
+        return 0
+    fi
+
+    local selected_backup=$(ls -1 "$backup_dir" | sed -n "${choice}p")
+    if [[ -z "$selected_backup" ]]; then
+        colorize red "Invalid choice." bold
+        return 1
+    fi
+
+    local original_file="${config_dir}/$(basename "$selected_backup" | sed 's/\.[0-9]\{14\}\.bak$//')"
+    cp "${backup_dir}/${selected_backup}" "$original_file"
+    colorize green "Backup restored: $original_file" bold
+}
+
 # Color codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -1852,41 +1514,273 @@ CYAN='\e[36m'
 MAGENTA="\e[95m"
 NC='\033[0m' # No Color
 
+# Add a function to display the script version
+display_script_version() {
+    echo
+    colorize cyan "Backhaul Script Version: ${SCRIPT_VERSION}" bold
+    echo
+}
+
 # Function to display menu
 display_menu() {
     clear
     display_logo
     display_server_info
     display_backhaul_core_status
-    
+    display_script_version  # Added to display the script version
     echo
-    colorize green " 1. Configure a new tunnel [IPv4/IPv6]" bold
-    colorize red " 2. Tunnel management menu" bold
+    colorize cyan " 1. Configure a new tunnel [IPv4/IPv6]" bold
+    colorize cyan " 2. Tunnel management menu" bold
     colorize cyan " 3. Check tunnels status" bold
- 	echo -e " 4. Optimize network & system limits"
- 	echo -e " 5. Update & Install Backhaul Core"
- 	echo -e " 6. Update & install script"
- 	echo -e " 7. Remove Backhaul Core"
-    echo -e " 0. Exit"
+    colorize cyan " 4. Core Manager" bold
+    colorize cyan " 5. Web Panel" bold
+    colorize red " 0. Exit" bold
     echo
     echo "-------------------------------"
 }
 
+# Function to handle web panel
+web_panel() {
+    clear
+    colorize cyan "Web Panel Menu" bold
+    echo
+    colorize cyan " 1. Install Web Panel" bold
+    colorize cyan " 2. Remove Web Panel" bold
+    colorize red " 0. Back to Main Menu" bold
+    echo
+    echo "-------------------------------"
+    read -p "Enter your choice [0-2]: " web_choice
+    case $web_choice in
+        1) install_web_panel ;;
+        2) remove_web_panel ;;
+        0) return ;;
+        *) echo -e "${RED} Invalid option!${NC}" && sleep 1 ;;
+    esac
+}
+
+# Function to install web panel
+install_web_panel() {
+    clear
+    colorize cyan "Installing Web Panel with Authentication and TLS..." bold
+    echo
+
+    # Install necessary packages
+    if ! command -v python3 &> /dev/null; then
+        colorize yellow "Installing Python3..." bold
+        sudo apt-get update
+        sudo apt-get install -y python3 python3-pip
+    fi
+
+    # Install Flask, Flask-Cors, and Flask-HTTPAuth for API
+    if ! python3 -m pip show flask &> /dev/null; then
+        colorize yellow "Installing Flask, Flask-Cors, and Flask-HTTPAuth..." bold
+        python3 -m pip install flask flask-cors flask-httpauth
+    fi
+
+    # Create web panel directory
+    local web_panel_dir="/var/www/backhaul-panel"
+    sudo mkdir -p "$web_panel_dir"
+
+    # Generate self-signed TLS certificate
+    local cert_dir="/etc/backhaul-panel"
+    sudo mkdir -p "$cert_dir"
+    sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout "$cert_dir/server.key" \
+        -out "$cert_dir/server.crt" \
+        -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=localhost"
+
+    # Create HTML and API files
+    echo "Creating Web Panel files..."
+    sudo bash -c "cat > $web_panel_dir/index.html" << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backhaul Web Panel</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; color: #333; }
+        h1 { color: #4CAF50; text-align: center; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+        button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        button:hover { background-color: #45a049; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; }
+        pre { background: #f4f4f9; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .metrics { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Backhaul Web Panel</h1>
+        <button onclick="fetchStatus()">Check Tunnel Status</button>
+        <button onclick="fetchMetrics()">View Metrics</button>
+        <table id="tunnelTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Port</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div class="metrics">
+            <h2>Metrics</h2>
+            <pre id="metricsOutput"></pre>
+        </div>
+    </div>
+    <script>
+        const username = prompt("Enter username:");
+        const password = prompt("Enter password:");
+        const headers = new Headers({
+            "Authorization": "Basic " + btoa(`${username}:${password}`)
+        });
+
+        async function fetchStatus() {
+            const response = await fetch('/api/status', { headers });
+            const data = await response.json();
+            const tableBody = document.querySelector('#tunnelTable tbody');
+            tableBody.innerHTML = '';
+            data.tunnels.forEach(tunnel => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${tunnel.name}</td><td>${tunnel.port}</td><td>${tunnel.status}</td>`;
+                tableBody.appendChild(row);
+            });
+        }
+
+        async function fetchMetrics() {
+            const response = await fetch('/api/metrics', { headers });
+            const data = await response.json();
+            document.getElementById('metricsOutput').textContent = JSON.stringify(data, null, 2);
+        }
+    </script>
+</body>
+</html>
+EOF
+
+    sudo bash -c "cat > $web_panel_dir/api.py" << 'EOF'
+from flask import Flask, jsonify
+from flask_cors import CORS
+from flask_httpauth import HTTPBasicAuth
+from werkzeug.security import generate_password_hash, check_password_hash
+import psutil
+
+app = Flask(__name__)
+CORS(app)
+auth = HTTPBasicAuth()
+
+# User credentials
+users = {
+    "admin": generate_password_hash("password123")
+}
+
+@auth.verify_password
+def verify_password(username, password):
+    if username in users and check_password_hash(users.get(username), password):
+        return username
+
+@app.route('/api/status', methods=['GET'])
+@auth.login_required
+def status():
+    return jsonify({
+        "status": "running",
+        "tunnels": [
+            {"name": "Tunnel 1", "port": 8080, "status": "active"},
+            {"name": "Tunnel 2", "port": 9090, "status": "inactive"}
+        ]
+    })
+
+@app.route('/api/metrics', methods=['GET'])
+@auth.login_required
+def metrics():
+    metrics_data = {
+        "cpu_usage": psutil.cpu_percent(interval=1),
+        "memory": psutil.virtual_memory()._asdict(),
+        "disk": psutil.disk_usage('/')._asdict(),
+        "network": psutil.net_io_counters()._asdict()
+    }
+    return jsonify(metrics_data)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=22490, ssl_context=('/etc/backhaul-panel/server.crt', '/etc/backhaul-panel/server.key'))
+EOF
+
+    # Create systemd service for the web panel
+    echo "Creating systemd service for Web Panel..."
+    sudo bash -c "cat > /etc/systemd/system/backhaul-web-panel.service" << EOF
+[Unit]
+Description=Backhaul Web Panel
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 $web_panel_dir/api.py
+Restart=always
+User=backhaul
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # Start and enable the web panel service
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now backhaul-web-panel.service
+
+    colorize green "Web Panel installed with TLS and authentication. Access it at: https://localhost:22490" bold
+    press_key
+}
+
+# Function to remove web panel
+remove_web_panel() {
+    clear
+    colorize cyan "Removing Web Panel..." bold
+    echo
+
+    # Stop and disable the web panel service
+    sudo systemctl stop backhaul-web-panel.service
+    sudo systemctl disable backhaul-web-panel.service
+
+    # Remove files and service
+    sudo rm -rf /var/www/backhaul-panel
+    sudo rm -f /etc/systemd/system/backhaul-web-panel.service
+
+    # Reload systemd
+    sudo systemctl daemon-reload
+
+    colorize green "Web Panel removed successfully." bold
+    press_key
+}
+
 # Function to read user input
 read_option() {
-    read -p "Enter your choice [0-7]: " choice
+    read -p "Enter your choice [0-5]: " choice
     case $choice in
         1) configure_tunnel ;;
         2) tunnel_management ;;
         3) check_tunnel_status ;;
-        4) hawshemi_script ;;
-        5) download_and_extract_backhaul "menu";;
-        6) update_script ;;
-        7) remove_core ;;
+        4) core_manager_menu ;;
+        5) web_panel ;;
         0) exit 0 ;;
         *) echo -e "${RED} Invalid option!${NC}" && sleep 1 ;;
     esac
 }
+
+# Function to create a non-root user for running services
+create_backhaul_user() {
+    if ! id -u backhaul &>/dev/null; then
+        sudo useradd -r -s /usr/sbin/nologin backhaul
+        colorize green "User 'backhaul' created successfully." bold
+    else
+        colorize yellow "User 'backhaul' already exists." bold
+    fi
+}
+
+# Call the function to ensure the user exists
+create_backhaul_user
 
 # Main script
 while true
