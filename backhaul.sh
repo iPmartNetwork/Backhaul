@@ -11,8 +11,10 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # just press key to continue
-press_key(){
- read -p "Press any key to continue..."
+press_key() {
+    echo -n "Press any key to continue..."
+    read -r -n 1
+    echo
 }
 
 # Define a function to colorize text
@@ -158,10 +160,21 @@ download_and_extract_backhaul
 SERVER_IP=$(hostname -I | awk '{print $1}')
 
 # Fetch server country
-SERVER_COUNTRY=$(curl -sS --max-time 2 "http://ipwhois.app/json/$SERVER_IP" | jq -r '.country')
+fetch_data() {
+    local url=$1
+    local output
+    output=$(curl -sS --max-time 5 "$url")
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to fetch data from $url"
+        return 1
+    fi
+    echo "$output"
+}
+
+SERVER_COUNTRY=$(fetch_data "http://ipwhois.app/json/$SERVER_IP" | jq -r '.country')
 
 # Fetch server isp 
-SERVER_ISP=$(curl -sS --max-time 2 "http://ipwhois.app/json/$SERVER_IP" | jq -r '.isp')
+SERVER_ISP=$(fetch_data "http://ipwhois.app/json/$SERVER_IP" | jq -r '.isp')
 
 
 # Function to display ASCII logo
@@ -223,18 +236,21 @@ check_ipv6() {
 
 check_port() {
     local PORT=$1
-	local TRANSPORT=$2
-	
+    local TRANSPORT=$2
+
     if [ -z "$PORT" ]; then
         echo "Usage: check_port <port> <transport>"
         return 1
     fi
-    
-	if ([[ "$TRANSPORT" == "tcp" ]] && ss -tlnp "sport = :$PORT" | grep "$PORT" > /dev/null) || ([[ "$TRANSPORT" == "udp" ]] && ss -ulnp "sport = :$PORT" | grep "$PORT" > /dev/null); then
-		return 0
-	else
-		return 1
-   	fi
+
+    if [[ "$TRANSPORT" == "tcp" ]]; then
+        ss -tln | grep -q ":$PORT"
+    elif [[ "$TRANSPORT" == "udp" ]]; then
+        ss -uln | grep -q ":$PORT"
+    else
+        echo "Invalid transport type: $TRANSPORT"
+        return 1
+    fi
 }
 
 # Function for configuring tunnel
