@@ -165,35 +165,6 @@ function start_web_interface() {
     echo -e "${GREEN}Web interface started at http://localhost:8080.${NC}"
 }
 
-# 13. Task Scheduling
-function schedule_task() {
-    echo -e "${CYAN}Scheduling Task...${NC}"
-    while true; do
-        read -p "Enter command to schedule: " command
-        if [[ -z "$command" ]]; then
-            echo -e "${RED}Command cannot be empty. Please enter a valid command.${NC}"
-        else
-            break
-        fi
-    done
-
-    while true; do
-        read -p "Enter schedule (e.g., '0 2 * * *' for daily at 2 AM): " schedule
-        if [[ "$schedule" =~ ^([0-9\*\/,-]+\s){4}[0-9\*\/,-]+$ ]]; then
-            break
-        else
-            echo -e "${RED}Invalid schedule format. Please use valid cron syntax.${NC}"
-        fi
-    done
-
-    (crontab -l 2>/dev/null; echo "$schedule $command") | crontab -
-    if [[ $? -eq 0 ]]; then
-        echo -e "${GREEN}Task scheduled successfully.${NC}"
-    else
-        echo -e "${RED}Failed to schedule the task. Please check your input.${NC}"
-    fi
-}
-
 # 14. Support for New Protocols
 function add_protocol_support() {
     echo -e "${CYAN}Adding Protocol Support...${NC}"
@@ -239,7 +210,6 @@ function display_menu() {
     echo -e "${CYAN}│ 15) Configure TLS                       │${NC}"
     echo -e "${CYAN}│ 16) Manage Services                     │${NC}"
     echo -e "${CYAN}│ 17) Start Web Interface                 │${NC}"
-    echo -e "${CYAN}│ 18) Schedule Task                       │${NC}"
     echo -e "${CYAN}│ 19) Add Protocol Support                │${NC}"
     echo -e "${CYAN}│ 20) Generate Report                     │${NC}"
     echo -e "${WHITE}│ 0) Exit                                 │${NC}"
@@ -468,10 +438,10 @@ while true; do
         15) configure_tls ;;
         16) manage_services ;;
         17) start_web_interface ;;
-        18) schedule_task ;;
         19) add_protocol_support ;;
         20) generate_report ;;
         0) exit ;;
         *) echo -e "${RED}Invalid option.${NC}"; sleep 1 ;;
     esac
 done
+
