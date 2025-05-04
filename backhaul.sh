@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define script version
-SCRIPT_VERSION="v0.6.0"
+SCRIPT_VERSION="v2.2.4"
 
 # Check if the script is run as root
 if [[ $EUID -ne 0 ]]; then
@@ -168,20 +168,22 @@ SERVER_ISP=$(curl -sS --max-time 2 "http://ipwhois.app/json/$SERVER_IP" | jq -r 
 display_logo() {   
     echo -e "\033[36m"  # Updated to turquoise
     cat << "EOF"
- ____  ____  ____  _  __ _     ____  _     _    
-/  _ \/  _ \/   _\/ |/ // \ /|/  _ \/ \ /\/ \   
-| | //| / \||  /  |   / | |_||| / \|| | ||| |   
-| |_\\| |-|||  \_ |   \ | | ||| |-||| \_/|| |_/\
-\____/\_/ \|\____/\_|\_\\_/ \|\_/ \|\____/\____/
-                                                
-   Lightning-fast reverse tunneling solution
+____________________________________________________________________________________
+        ____                             _     _                                     
+    ,   /    )                           /|   /                                  /   
+-------/____/---_--_----__---)__--_/_---/-| -/-----__--_/_-----------__---)__---/-__-
+  /   /        / /  ) /   ) /   ) /    /  | /    /___) /   | /| /  /   ) /   ) /(    
+_/___/________/_/__/_(___(_/_____(_ __/___|/____(___ _(_ __|/_|/__(___/_/_____/___\__
+____________________________________________________________________________________                                                                                     
+
+             Lightning-fast reverse tunneling solution
 EOF
     echo -e "\033[0m\033[36m"  # Updated to turquoise
     echo -e "Script Version: \033[36m${SCRIPT_VERSION}\033[36m"  # Updated to turquoise
     if [[ -f "${config_dir}/backhaul_premium" ]]; then
     	echo -e "Core Version: \033[36m$($config_dir/backhaul_premium -v)\033[36m"  # Updated to turquoise
     fi
-    echo -e "Telegram Channel: \033[36m@anony_identity\033[0m"  # Updated to turquoise
+    echo -e "Telegram Channel: \033[36m@iPmartch\033[0m"  # Updated to turquoise
 }
 
 # Function to display server location and IP
@@ -228,23 +230,11 @@ check_port() {
         return 1
     fi
     
-	if [[ "$TRANSPORT" == "tcp" ]]; then
-		if ss -tlnp "sport = :$PORT" | grep "$PORT" > /dev/null; then
-			return 0
-			
-		else
-			return 1
-		fi
-	elif [[ "$TRANSPORT" == "udp" ]]; then
-		if ss -ulnp "sport = :$PORT" | grep "$PORT" > /dev/null; then
-			return 0
-		else
-			return 1
-		fi
+	if ([[ "$TRANSPORT" == "tcp" ]] && ss -tlnp "sport = :$PORT" | grep "$PORT" > /dev/null) || ([[ "$TRANSPORT" == "udp" ]] && ss -ulnp "sport = :$PORT" | grep "$PORT" > /dev/null); then
+		return 0
 	else
 		return 1
    	fi
-   	
 }
 
 # Function for configuring tunnel
@@ -1419,7 +1409,7 @@ update_script(){
 # Define the destination path
 DEST_DIR="/usr/bin/"
 BACKHAUL_SCRIPT="backhaul"
-SCRIPT_URL="https://raw.githubusercontent.com/wafflenoodle/zenith-stash/refs/heads/main/backhaul.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/iPmartNetwork/Backhaul/refs/heads/master/backhaul.sh"
 
 echo
 # Check if backhaul.sh exists in /bin/bash
@@ -1455,6 +1445,155 @@ fi
 
 }
 
+# Function to start the web panel
+start_web_panel() {
+    local dashboard_dir="/var/www/backhaul-dashboard"
+    mkdir -p "$dashboard_dir"
+    cat << EOF > "$dashboard_dir/index.html"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backhaul Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #f4f4f4; }
+    </style>
+</head>
+<body>
+    <h1>Backhaul Dashboard</h1>
+    <p>Welcome to the Backhaul Web Panel. Use the menu below to manage tunnels.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Action</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><button onclick="alert('Start Tunnel')">Start Tunnel</button></td>
+                <td>Start a new tunnel configuration.</td>
+            </tr>
+            <tr>
+                <td><button onclick="alert('Stop Tunnel')">Stop Tunnel</button></td>
+                <td>Stop an existing tunnel.</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
+EOF
+
+    echo -e "\nStarting web panel on port 8080..."
+    python3 -m http.server 8080 --directory "$dashboard_dir" >/dev/null 2>&1 &
+    echo "Web panel started. Access it at http://localhost:8080"
+}
+
+# Function to stop the web panel
+stop_web_panel() {
+    local pid
+    pid=$(ps aux | grep "[h]ttp.server" | awk '{print $2}')
+    if [[ -n "$pid" ]]; then
+        kill "$pid"
+        echo "Web panel stopped."
+    else
+        echo "Web panel is not running."
+    fi
+}
+
+# Function to install the web panel
+install_web_panel() {
+    local dashboard_dir="/var/www/backhaul-dashboard"
+    local service_file="/etc/systemd/system/backhaul-web-panel.service"
+    local port=22490
+
+    # Prompt user for custom port
+    echo -ne "Enter the port for the web panel (default is 22490): "
+    read -r input_port
+    if [[ "$input_port" =~ ^[0-9]+$ ]] && [ "$input_port" -ge 1024 ] && [ "$input_port" -le 65535 ]; then
+        port="$input_port"
+    else
+        echo "Using default port: $port"
+    fi
+
+    # Prompt user for custom directory
+    echo -ne "Enter the directory for the web panel files (default is /var/www/backhaul-dashboard): "
+    read -r input_dir
+    if [[ -n "$input_dir" ]]; then
+        dashboard_dir="$input_dir"
+    fi
+
+    # Create the dashboard directory
+    mkdir -p "$dashboard_dir"
+
+    # Create a simple HTML file for the web panel
+    cat << EOF > "$dashboard_dir/index.html"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backhaul Web Panel</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        p { color: #555; }
+    </style>
+</head>
+<body>
+    <h1>Welcome to Backhaul Web Panel</h1>
+    <p>Manage your tunnels and configurations from this web interface.</p>
+</body>
+</html>
+EOF
+
+    # Create a systemd service file for the web panel
+    cat << EOF > "$service_file"
+[Unit]
+Description=Backhaul Web Panel
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m http.server $port --directory $dashboard_dir
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # Reload systemd, enable, and start the web panel service
+    systemctl daemon-reload
+    systemctl enable --now backhaul-web-panel.service
+
+    echo "Web panel installed and started. Access it at http://<your-server-ip>:$port"
+}
+
+# Function to manage the web panel service
+manage_web_panel() {
+    echo -e "\n\e[1;36mWeb Panel Management Options:\e[0m"
+    echo -e " \e[1;32m[1]\e[0m Start Web Panel"
+    echo -e " \e[1;31m[2]\e[0m Stop Web Panel"
+    echo -e " \e[1;33m[3]\e[0m Restart Web Panel"
+    echo -e " \e[1;34m[4]\e[0m View Web Panel Status"
+    echo -e " \e[1;31m[0]\e[0m Back to Main Menu"
+    read -p "Enter your choice [0-4]: " panel_choice
+    case $panel_choice in
+        1) systemctl start backhaul-web-panel.service && echo "Web panel started." ;;
+        2) systemctl stop backhaul-web-panel.service && echo "Web panel stopped." ;;
+        3) systemctl restart backhaul-web-panel.service && echo "Web panel restarted." ;;
+        4) systemctl status backhaul-web-panel.service ;;
+        0) return ;;
+        *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
+    esac
+}
+
 # Color codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -1474,29 +1613,68 @@ display_menu() {
     echo -e "\e[93m═══════════════════════════════════════════════════════════════════════\e[0m"
     echo -e " \e[1;36mMAIN MENU\e[0m"
     echo -e "\e[93m═══════════════════════════════════════════════════════════════════════\e[0m"
-    echo -e " \e[1;32m1)\e[0m Configure a new tunnel [IPv4/IPv6]"
-    echo -e " \e[1;31m2)\e[0m Tunnel management menu"
-    echo -e " \e[1;36m3)\e[0m Check tunnels status"
-    echo -e " \e[1;33m4)\e[0m Advanced Options"
-    echo -e " \e[1;35m5)\e[0m Update & Install Backhaul Core"
-    echo -e " \e[1;34m6)\e[0m Update & Install Script"
-    echo -e " \e[1;31m7)\e[0m Remove Backhaul Core"
-    echo -e " \e[1;31m0)\e[0m Exit"
+    echo -e " \e[1;32m[1]\e[0m \e[1;37mConfigure a new tunnel [IPv4/IPv6]\e[0m"
+    echo -e " \e[1;33m[2]\e[0m \e[1;37mConfigure multiple tunnels\e[0m"
+    echo -e " \e[1;31m[3]\e[0m \e[1;37mTunnel management menu\e[0m"
+    echo -e " \e[1;36m[4]\e[0m \e[1;37mCheck tunnels status\e[0m"
+    echo -e " \e[1;33m[5]\e[0m \e[1;37mAdvanced Options\e[0m"
+    echo -e " \e[1;35m[6]\e[0m \e[1;37mCore Manager\e[0m"
+    echo -e " \e[1;34m[7]\e[0m \e[1;37mUpdate & Install Script\e[0m"
+    echo -e " \e[1;36m[8]\e[0m \e[1;37mWeb Panel Manager\e[0m"
+    echo -e " \e[1;31m[0]\e[0m \e[1;37mExit\e[0m"
     echo -e "\e[93m═══════════════════════════════════════════════════════════════════════\e[0m"
 }
 
-# Function to display advanced options menu
-display_advanced_menu() {
-    clear
-    echo -e "\e[93m═══════════════════════════════════════════════════════════════════════\e[0m"
-    echo -e " \e[1;36mADVANCED OPTIONS\e[0m"
-    echo -e "\e[93m═══════════════════════════════════════════════════════════════════════\e[0m"
-    echo -e " \e[1;32m1)\e[0m View Service Logs"
-    echo -e " \e[1;33m2)\e[0m View Service Status"
-    echo -e " \e[1;34m3)\e[0m Check Core Version"
-    echo -e " \e[1;35m4)\e[0m Check Script Version"
-    echo -e " \e[1;31m0)\e[0m Back to Main Menu"
-    echo -e "\e[93m═══════════════════════════════════════════════════════════════════════\e[0m"
+# Function to handle core manager options
+handle_core_manager() {
+    while true; do
+        echo -e "\n\e[1;36mCore Manager Options:\e[0m"
+        echo -e " \e[1;32m[1]\e[0m Install/Update Backhaul Core"
+        echo -e " \e[1;31m[2]\e[0m Remove Backhaul Core"
+        echo -e " \e[1;31m[0]\e[0m Back to Main Menu"
+        read -p "Enter your choice [0-2]: " core_choice
+        case $core_choice in
+            1) download_and_extract_backhaul "menu" ;;
+            2) remove_core ;;
+            0) return ;;
+            *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
+        esac
+    done
+}
+
+# Function to read user input
+read_option() {
+    read -p "Enter your choice [0-8]: " choice
+    case $choice in
+        1) configure_tunnel ;;
+        2) configure_multi_tunnel ;;
+        3) tunnel_management ;;
+        4) check_tunnel_status ;;
+        5) handle_advanced_options ;;
+        6) handle_core_manager ;;
+        7) update_script ;;
+        8) 
+            echo -e "\n\e[1;36mWeb Panel Manager Options:\e[0m"
+            echo -e " \e[1;32m[1]\e[0m Start Web Panel"
+            echo -e " \e[1;31m[2]\e[0m Stop Web Panel"
+            echo -e " \e[1;33m[3]\e[0m Restart Web Panel"
+            echo -e " \e[1;34m[4]\e[0m View Web Panel Status"
+            echo -e " \e[1;31m[5]\e[0m Install Web Panel"
+            echo -e " \e[1;31m[0]\e[0m Back to Main Menu"
+            read -p "Enter your choice [0-5]: " panel_choice
+            case $panel_choice in
+                1) start_web_panel ;;
+                2) stop_web_panel ;;
+                3) systemctl restart backhaul-web-panel.service && echo "Web panel restarted." ;;
+                4) systemctl status backhaul-web-panel.service ;;
+                5) install_web_panel ;;
+                0) return ;;
+                *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
+            esac
+            ;;
+        0) exit 0 ;;
+        *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
+    esac
 }
 
 # Function to handle advanced options
@@ -1536,20 +1714,109 @@ handle_advanced_options() {
     done
 }
 
-# Function to read user input
-read_option() {
-    read -p "Enter your choice [0-7]: " choice
-    case $choice in
-        1) configure_tunnel ;;
-        2) tunnel_management ;;
-        3) check_tunnel_status ;;
-        4) handle_advanced_options ;;
-        5) download_and_extract_backhaul "menu" ;;
-        6) update_script ;;
-        7) remove_core ;;
-        0) exit 0 ;;
-        *) echo -e "\e[1;31mInvalid option! Please try again.\e[0m" && sleep 1 ;;
-    esac
+# Function to configure multiple tunnels
+configure_multi_tunnel() {
+    clear
+    colorize turquoise "Configuring Multiple Tunnels" bold
+    echo
+
+    # Prompt for the number of tunnels
+    local num_tunnels
+    while true; do
+        echo -ne "Enter the number of tunnels to configure: "
+        read -r num_tunnels
+        if [[ "$num_tunnels" =~ ^[0-9]+$ ]] && [ "$num_tunnels" -gt 0 ]; then
+            break
+        else
+            colorize red "Please enter a valid positive number."
+        fi
+    done
+
+    # Loop to configure each tunnel
+    for ((i = 1; i <= num_tunnels; i++)); do
+        echo
+        colorize yellow "Configuring Tunnel $i of $num_tunnels" bold
+
+        # Prompt for tunnel-specific parameters
+        local tunnel_port
+        while true; do
+            echo -ne "[Tunnel $i] Enter Tunnel Port: "
+            read -r tunnel_port
+            if [[ "$tunnel_port" =~ ^[0-9]+$ ]] && [ "$tunnel_port" -gt 22 ] && [ "$tunnel_port" -le 65535 ]; then
+                if check_port "$tunnel_port" "tcp"; then
+                    colorize red "Port $tunnel_port is already in use. Please choose another port."
+                else
+                    break
+                fi
+            else
+                colorize red "Please enter a valid port number between 23 and 65535."
+            fi
+        done
+
+        local transport
+        while [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; do
+            echo -ne "[Tunnel $i] Enter Transport Type (tcp/tcpmux/ws/etc.): "
+            read -r transport
+            if [[ ! "$transport" =~ ^(tcp|tcpmux|utcpmux|ws|wsmux|uwsmux|udp|tcptun|faketcptun)$ ]]; then
+                colorize red "Invalid transport type. Please choose a valid option."
+            fi
+        done
+
+        local token
+        echo -ne "[Tunnel $i] Enter Security Token (default: your_token): "
+        read -r token
+        token="${token:-your_token}"
+
+        # Generate configuration for the tunnel
+        local config_file="${config_dir}/multi_tunnel_${tunnel_port}.toml"
+        cat << EOF > "$config_file"
+[server]
+bind_addr = ":${tunnel_port}"
+transport = "${transport}"
+token = "${token}"
+keepalive_period = 75
+nodelay = true
+channel_size = 2048
+heartbeat = 40
+mux_con = 8
+mux_version = 2
+mux_framesize = 32768
+mux_recievebuffer = 4194304
+mux_streambuffer = 2000000
+sniffer = false
+log_level = "info"
+EOF
+
+        # Create systemd service for the tunnel
+        local service_file="${service_dir}/multi_tunnel_${tunnel_port}.service"
+        cat << EOF > "$service_file"
+[Unit]
+Description=Backhaul Multi-Tunnel Port $tunnel_port
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=${config_dir}/backhaul_premium -c $config_file
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+        # Enable and start the service
+        systemctl daemon-reload
+        systemctl enable --now "multi_tunnel_${tunnel_port}.service" >/dev/null 2>&1
+        if systemctl is-active --quiet "multi_tunnel_${tunnel_port}.service"; then
+            colorize green "Tunnel $i with port $tunnel_port configured and started successfully."
+        else
+            colorize red "Failed to start Tunnel $i with port $tunnel_port."
+        fi
+    done
+
+    echo
+    colorize green "All $num_tunnels tunnels configured successfully." bold
+    press_key
 }
 
 # Main script
